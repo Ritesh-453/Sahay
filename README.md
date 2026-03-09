@@ -353,7 +353,7 @@ Railway rebuilds and redeploys automatically within 2-3 minutes.
 | Admin | `admin` | `admin123` |
 | Customer | Register via the app | Your chosen password |
 
-> ⚠️ Change the default admin password before using in a real environment.
+> 
 
 ---
 
