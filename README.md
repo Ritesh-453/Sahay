@@ -395,10 +395,4 @@ GitHub: [@Ritesh-453](https://github.com/Ritesh-453)
 
 ---
 
-## 📄 License
-
-This project is built for educational purposes as part of an IP (Internet Programming) college project.
-
----
-
-*Built with ❤️ for IP College Project — Second Year IT Engineering*
+*Built for assisting road-side car*
