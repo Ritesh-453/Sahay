@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: roadassist
+    runtime: java
+    buildCommand: mvn clean package -DskipTests
+    startCommand: java -jar target/*.jar
+    envVars:
+      - key: JAVA_VERSION
+        value: "17"
