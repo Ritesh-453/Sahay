@@ -119,7 +119,7 @@ canvas{max-height:220px}
 </div>
 
 <script>
-const API = "https://roadassist-production-dcb6.up.railway.app";
+const API = "https://roadassist.onrender.com";
 const role = localStorage.getItem("role");
 if (!role || role !== "ADMIN") { alert("Access denied!"); window.location.href = "index.html"; }
 function logout() { localStorage.clear(); window.location.href = "index.html"; }
