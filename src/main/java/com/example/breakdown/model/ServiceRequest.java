@@ -84,4 +84,13 @@ public class ServiceRequest {
 
     public Double getMechanicLongitude() { return mechanicLongitude; }
     public void setMechanicLongitude(Double mechanicLongitude) { this.mechanicLongitude = mechanicLongitude; }
+
+    public String getVehicleImage() { return vehicleImage; }
+    public void setVehicleImage(String vehicleImage) { this.vehicleImage = vehicleImage; }
+
+    public Integer getReviewRating() { return reviewRating; }
+    public void setReviewRating(Integer reviewRating) { this.reviewRating = reviewRating; }
+
+    public String getReviewComment() { return reviewComment; }
+    public void setReviewComment(String reviewComment) { this.reviewComment = reviewComment; }
 }
