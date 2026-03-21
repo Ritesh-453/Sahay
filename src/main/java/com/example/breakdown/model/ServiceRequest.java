@@ -27,6 +27,16 @@ public class ServiceRequest {
     private Double mechanicLatitude;
     private Double mechanicLongitude;
 
+    // Vehicle image (base64)
+    @Column(columnDefinition = "LONGTEXT")
+    private String vehicleImage;
+
+    // Review
+    private Integer reviewRating;
+
+    @Column(columnDefinition = "TEXT")
+    private String reviewComment;
+
     @PrePersist
     public void onCreate() {
         if (this.createdAt == null) this.createdAt = LocalDateTime.now();

@@ -31,7 +31,7 @@
         .section-header .line { flex:1; height:1px; background:var(--border); }
         .card { background:var(--white); border-radius:12px; border:1px solid var(--border); box-shadow:0 1px 4px rgba(0,0,0,0.05); overflow:hidden; }
         .table-wrapper { overflow-x:auto; -webkit-overflow-scrolling:touch; }
-        table { width:100%; min-width:900px; border-collapse:collapse; }
+        table { width:100%; min-width:1000px; border-collapse:collapse; }
         thead tr { background:var(--navy); }
         thead th { padding:12px 16px; text-align:left; font-size:11px; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:0.5px; white-space:nowrap; }
         tbody tr { border-bottom:1px solid var(--border); transition:background 0.15s; }
@@ -47,6 +47,9 @@
         .btn-complete { background:#16a34a; color:white; border:none; padding:6px 14px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all 0.2s; }
         .btn-complete:hover { background:#15803d; }
         .btn-done { background:#f1f5f9; color:#94a3b8; border:1px solid var(--border); padding:6px 14px; border-radius:6px; font-size:12px; font-weight:600; cursor:default; font-family:'DM Sans',sans-serif; }
+        .btn-view-review { background:transparent; color:#7c3aed; border:1px solid #ddd6fe; padding:5px 12px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; }
+        .btn-view-review:hover { background:#ede9fe; }
+        .stars-display { color:#f59e0b; font-size:13px; letter-spacing:1px; }
         .overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); z-index:999; justify-content:center; align-items:center; padding:20px; backdrop-filter:blur(2px); }
         .overlay.show { display:flex; }
         .mechanic-popup { background:var(--white); border-radius:16px; width:100%; max-width:500px; box-shadow:0 20px 60px rgba(0,0,0,0.25); overflow:hidden; }
@@ -65,6 +68,13 @@
         .btn-cancel { flex:1; padding:12px; background:var(--grey-bg); color:var(--navy-mid); border:1.5px solid var(--border); border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; }
         .btn-confirm { flex:2; padding:12px; background:var(--red); color:white; border:none; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; transition:background 0.2s; }
         .btn-confirm:hover { background:var(--red-dark); }
+        /* Review view popup */
+        .review-view-pop { background:white; border-radius:16px; width:100%; max-width:400px; box-shadow:0 20px 60px rgba(0,0,0,0.25); overflow:hidden; text-align:center; padding-bottom:24px; }
+        .review-view-pop .popup-header { background:linear-gradient(135deg,#4c1d95,#7c3aed); }
+        .big-stars { font-size:32px; color:#f59e0b; letter-spacing:4px; margin:20px 0 6px; }
+        .rating-label { font-size:13px; color:var(--grey-text); margin-bottom:12px; }
+        .review-text { font-size:13px; color:var(--navy-mid); padding:0 24px; line-height:1.7; font-style:italic; background:#f8f4ff; border-radius:8px; margin:0 20px; padding:14px 16px; }
+        .btn-close-rv { margin-top:18px; padding:9px 28px; background:var(--navy); color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; }
         @media(max-width:768px) { .navbar{padding:0 16px;} .page{padding:16px;} .stats-grid{grid-template-columns:repeat(2,1fr);} }
         @media(max-width:480px) { .stats-grid{grid-template-columns:1fr 1fr; gap:10px;} .stat-card{padding:14px;} }
     </style>
@@ -79,21 +89,23 @@
 </nav>
 <div class="page">
     <div class="stats-grid">
-        <div class="stat-card"><div class="stat-icon total"></div><div><div class="stat-label">Total Requests</div><div class="stat-value" id="s-total">—</div></div></div>
-        <div class="stat-card"><div class="stat-icon pending"></div><div><div class="stat-label">Pending</div><div class="stat-value" id="s-pending">—</div></div></div>
-        <div class="stat-card"><div class="stat-icon accepted"></div><div><div class="stat-label">Accepted</div><div class="stat-value" id="s-accepted">—</div></div></div>
-        <div class="stat-card"><div class="stat-icon completed"></div><div><div class="stat-label">Completed</div><div class="stat-value" id="s-completed">—</div></div></div>
+        <div class="stat-card"><div class="stat-icon total">📋</div><div><div class="stat-label">Total Requests</div><div class="stat-value" id="s-total">—</div></div></div>
+        <div class="stat-card"><div class="stat-icon pending">⏳</div><div><div class="stat-label">Pending</div><div class="stat-value" id="s-pending">—</div></div></div>
+        <div class="stat-card"><div class="stat-icon accepted">🔧</div><div><div class="stat-label">Accepted</div><div class="stat-value" id="s-accepted">—</div></div></div>
+        <div class="stat-card"><div class="stat-icon completed">✅</div><div><div class="stat-label">Completed</div><div class="stat-value" id="s-completed">—</div></div></div>
     </div>
     <div class="section-header"><h2>All Requests</h2><div class="line"></div></div>
     <div class="card">
         <div class="table-wrapper">
             <table id="adminTable">
-                <thead><tr><th>ID</th><th>Customer</th><th>Phone</th><th>Vehicle</th><th>Issue</th><th>Location</th><th>Status</th><th>Submitted At</th><th>Action</th></tr></thead>
+                <thead><tr><th>ID</th><th>Customer</th><th>Phone</th><th>Vehicle</th><th>Issue</th><th>Location</th><th>Status</th><th>Submitted At</th><th>Review</th><th>Action</th></tr></thead>
                 <tbody></tbody>
             </table>
         </div>
     </div>
 </div>
+
+<!-- Assign Mechanic Overlay -->
 <div class="overlay" id="mechanicOverlay">
     <div class="mechanic-popup">
         <div class="popup-header"><h3>Assign Mechanic</h3><button class="btn-close" onclick="closePopup()">✕</button></div>
@@ -111,6 +123,18 @@
         </div>
     </div>
 </div>
+
+<!-- View Review Overlay -->
+<div class="overlay" id="reviewOverlay">
+    <div class="review-view-pop">
+        <div class="popup-header"><h3>Customer Review</h3><button class="btn-close" onclick="closeReviewPopup()">✕</button></div>
+        <div class="big-stars" id="rvStars"></div>
+        <p class="rating-label" id="rvLabel"></p>
+        <div class="review-text" id="rvComment"></div>
+        <button class="btn-close-rv" onclick="closeReviewPopup()">Close</button>
+    </div>
+</div>
+
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
 const API = "https://roadassist.onrender.com";
@@ -119,6 +143,7 @@ if (!role || role !== "ADMIN") { alert("Access denied!"); window.location.href =
 
 let currentRequestId = null, mechanicLat = null, mechanicLng = null;
 let mechanicMapInstance = null, mechanicMarker = null;
+const starLabels = ["", "Poor", "Fair", "Good", "Very Good", "Excellent"];
 
 function fetchRequests() {
     fetch(API + "/api/requests")
@@ -128,7 +153,7 @@ function fetchRequests() {
         tbody.innerHTML = "";
         let pending=0, accepted=0, completed=0;
         if (!data.length) {
-            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#94a3b8;padding:30px">No requests yet.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:#94a3b8;padding:30px">No requests yet.</td></tr>';
             document.getElementById("s-total").innerText = 0;
             document.getElementById("s-pending").innerText = 0;
             document.getElementById("s-accepted").innerText = 0;
@@ -147,6 +172,17 @@ function fetchRequests() {
                 : `<button class="btn-done" disabled>Done</button>`;
             const loc = req.latitude ? `${req.latitude.toFixed(4)}, ${req.longitude.toFixed(4)}` : 'N/A';
             const ist = formatIST(req.createdAt);
+
+            // Review column
+            let reviewCol = '<span style="color:#cbd5e1">—</span>';
+            if (req.reviewRating) {
+                let stars = '';
+                for (let i = 1; i <= 5; i++) stars += i <= req.reviewRating ? '★' : '☆';
+                const safeComment = encodeURIComponent(req.reviewComment || '');
+                reviewCol = `<span class="stars-display">${stars}</span>
+                  <button class="btn-view-review" onclick='showReview(${req.reviewRating}, decodeURIComponent("${safeComment}"))' style="margin-left:6px">View</button>`;
+            }
+
             tbody.innerHTML += `<tr>
                 <td style="color:#94a3b8;font-size:12px">#${req.id}</td>
                 <td><strong>${req.customerName}</strong></td>
@@ -156,6 +192,7 @@ function fetchRequests() {
                 <td style="color:#94a3b8">${loc}</td>
                 <td><span class="badge ${sc}">${req.status}</span></td>
                 <td style="color:#94a3b8">${ist}</td>
+                <td>${reviewCol}</td>
                 <td>${action}</td>
             </tr>`;
         });
@@ -166,6 +203,17 @@ function fetchRequests() {
     })
     .catch(() => alert("Failed to load requests."));
 }
+
+function showReview(rating, comment) {
+    let stars = '';
+    for (let i = 1; i <= 5; i++) stars += i <= rating ? '★' : '☆';
+    document.getElementById("rvStars").innerText = stars;
+    document.getElementById("rvLabel").innerText = starLabels[rating] + " — " + rating + " out of 5";
+    document.getElementById("rvComment").innerText = comment || "No comment provided.";
+    document.getElementById("reviewOverlay").classList.add("show");
+}
+
+function closeReviewPopup() { document.getElementById("reviewOverlay").classList.remove("show"); }
 
 function openMechanicPopup(requestId) {
     currentRequestId = requestId;

@@ -78,6 +78,20 @@ public class ServiceRequestController {
         return requestRepository.save(req);
     }
 
+    @PatchMapping("/{id}/review")
+    public ServiceRequest submitReview(@PathVariable Long id, @RequestBody ServiceRequest body) {
+        ServiceRequest req = repository.findById(id).orElseThrow();
+        req.setReviewRating(body.getReviewRating());
+        req.setReviewComment(body.getReviewComment());
+        return repository.save(req);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteRequest(@PathVariable Long id) {
+        repository.deleteById(id);
+        return ResponseEntity.ok().build();
+    }
+
     // Analytics: get list of requests in date range (for table)
     @GetMapping("/analytics")
     public List<ServiceRequest> analytics(
