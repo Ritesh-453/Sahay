@@ -98,9 +98,7 @@
     <div class="card">
         <div class="table-wrapper">
             <table id="adminTable">
-                <thead><tr><th>ID</th><th>Customer</th><th>Phone</th><th>Vehicle</th><th>Issue</th><th>Location</th><th>Status</th><th>Submitted At</th><th>Review</th><th>Action</th></tr></thead>
-                <tbody></tbody>
-            </table>
+                <thead><tr><th>ID</th><th>Customer</th><th>Phone</th><th>Vehicle</th><th>Issue</th><th>Location</th><th>Status</th><th>Submitted At</th><th>Image</th><th>Review</th><th>Action</th></tr></thead>
         </div>
     </div>
 </div>
@@ -145,10 +143,20 @@ let currentRequestId = null, mechanicLat = null, mechanicLng = null;
 let mechanicMapInstance = null, mechanicMarker = null;
 const starLabels = ["", "Poor", "Fair", "Good", "Very Good", "Excellent"];
 
+let allRequests = [];
+function showVehicleImage(id) {
+    const req = allRequests.find(r => r.id == id);
+    if (req && req.vehicleImage) {
+        document.getElementById("vehicleImgView").src = req.vehicleImage;
+        document.getElementById("imgOverlay").classList.add("show");
+    }
+}
+
 function fetchRequests() {
     fetch(API + "/api/requests")
     .then(res => res.json())
     .then(data => {
+        allRequests = data;
         const tbody = document.querySelector("#adminTable tbody");
         tbody.innerHTML = "";
         let pending=0, accepted=0, completed=0;
@@ -173,6 +181,12 @@ function fetchRequests() {
             const loc = req.latitude ? `${req.latitude.toFixed(4)}, ${req.longitude.toFixed(4)}` : 'N/A';
             const ist = formatIST(req.createdAt);
 
+            // Image column
+            let imageCol = '<span style="color:#cbd5e1">—</span>';
+            if (req.vehicleImage) {
+                imageCol = `<button class="btn-view-review" style="color:#0284c7;border-color:#bfdbfe" onclick="showVehicleImage('${req.id}')">📷 View</button>`;
+            }
+
             // Review column
             let reviewCol = '<span style="color:#cbd5e1">—</span>';
             if (req.reviewRating) {
@@ -192,6 +206,7 @@ function fetchRequests() {
                 <td style="color:#94a3b8">${loc}</td>
                 <td><span class="badge ${sc}">${req.status}</span></td>
                 <td style="color:#94a3b8">${ist}</td>
+                <td>${imageCol}</td>
                 <td>${reviewCol}</td>
                 <td>${action}</td>
             </tr>`;
@@ -283,5 +298,15 @@ function formatIST(dtStr) {
   return dd+'/'+mm+'/'+yyyy+', '+hh+':'+min;
 }
 </script>
+
+    <div class="overlay" id="imgOverlay">
+  <div style="background:white;border-radius:16px;max-width:500px;width:100%;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div class="popup-header"><h3>Vehicle Photo</h3><button class="btn-close" onclick="document.getElementById('imgOverlay').classList.remove('show')">✕</button></div>
+    <div style="padding:16px;text-align:center">
+      <img id="vehicleImgView" src="" style="width:100%;max-height:400px;object-fit:contain;border-radius:8px">
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
