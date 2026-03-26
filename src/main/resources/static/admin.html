@@ -68,12 +68,11 @@
         .btn-cancel { flex:1; padding:12px; background:var(--grey-bg); color:var(--navy-mid); border:1.5px solid var(--border); border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; }
         .btn-confirm { flex:2; padding:12px; background:var(--red); color:white; border:none; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; transition:background 0.2s; }
         .btn-confirm:hover { background:var(--red-dark); }
-        /* Review view popup */
         .review-view-pop { background:white; border-radius:16px; width:100%; max-width:400px; box-shadow:0 20px 60px rgba(0,0,0,0.25); overflow:hidden; text-align:center; padding-bottom:24px; }
         .review-view-pop .popup-header { background:linear-gradient(135deg,#4c1d95,#7c3aed); }
         .big-stars { font-size:32px; color:#f59e0b; letter-spacing:4px; margin:20px 0 6px; }
         .rating-label { font-size:13px; color:var(--grey-text); margin-bottom:12px; }
-        .review-text { font-size:13px; color:var(--navy-mid); padding:0 24px; line-height:1.7; font-style:italic; background:#f8f4ff; border-radius:8px; margin:0 20px; padding:14px 16px; }
+        .review-text { font-size:13px; color:var(--navy-mid); line-height:1.7; font-style:italic; background:#f8f4ff; border-radius:8px; margin:0 20px; padding:14px 16px; }
         .btn-close-rv { margin-top:18px; padding:9px 28px; background:var(--navy); color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; }
         @media(max-width:768px) { .navbar{padding:0 16px;} .page{padding:16px;} .stats-grid{grid-template-columns:repeat(2,1fr);} }
         @media(max-width:480px) { .stats-grid{grid-template-columns:1fr 1fr; gap:10px;} .stat-card{padding:14px;} }
@@ -99,6 +98,8 @@
         <div class="table-wrapper">
             <table id="adminTable">
                 <thead><tr><th>ID</th><th>Customer</th><th>Phone</th><th>Vehicle</th><th>Issue</th><th>Location</th><th>Status</th><th>Submitted At</th><th>Image</th><th>Review</th><th>Action</th></tr></thead>
+                <tbody></tbody>
+            </table>
         </div>
     </div>
 </div>
@@ -133,6 +134,16 @@
     </div>
 </div>
 
+<!-- Vehicle Image Overlay -->
+<div class="overlay" id="imgOverlay">
+    <div style="background:white;border-radius:16px;max-width:500px;width:100%;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+        <div class="popup-header"><h3>Vehicle Photo</h3><button class="btn-close" onclick="document.getElementById('imgOverlay').classList.remove('show')">✕</button></div>
+        <div style="padding:16px;text-align:center">
+            <img id="vehicleImgView" src="" style="width:100%;max-height:400px;object-fit:contain;border-radius:8px">
+        </div>
+    </div>
+</div>
+
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
 const API = "https://roadassist.onrender.com";
@@ -141,9 +152,9 @@ if (!role || role !== "ADMIN") { alert("Access denied!"); window.location.href =
 
 let currentRequestId = null, mechanicLat = null, mechanicLng = null;
 let mechanicMapInstance = null, mechanicMarker = null;
+let allRequests = [];
 const starLabels = ["", "Poor", "Fair", "Good", "Very Good", "Excellent"];
 
-let allRequests = [];
 function showVehicleImage(id) {
     const req = allRequests.find(r => r.id == id);
     if (req && req.vehicleImage) {
@@ -161,7 +172,7 @@ function fetchRequests() {
         tbody.innerHTML = "";
         let pending=0, accepted=0, completed=0;
         if (!data.length) {
-            tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:#94a3b8;padding:30px">No requests yet.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:#94a3b8;padding:30px">No requests yet.</td></tr>';
             document.getElementById("s-total").innerText = 0;
             document.getElementById("s-pending").innerText = 0;
             document.getElementById("s-accepted").innerText = 0;
@@ -181,13 +192,11 @@ function fetchRequests() {
             const loc = req.latitude ? `${req.latitude.toFixed(4)}, ${req.longitude.toFixed(4)}` : 'N/A';
             const ist = formatIST(req.createdAt);
 
-            // Image column
             let imageCol = '<span style="color:#cbd5e1">—</span>';
             if (req.vehicleImage) {
-                imageCol = `<button class="btn-view-review" style="color:#0284c7;border-color:#bfdbfe" onclick="showVehicleImage('${req.id}')">📷 View</button>`;
+                imageCol = `<button class="btn-view-review" style="color:#0284c7;border-color:#bfdbfe" onclick="showVehicleImage(${req.id})">📷 View</button>`;
             }
 
-            // Review column
             let reviewCol = '<span style="color:#cbd5e1">—</span>';
             if (req.reviewRating) {
                 let stars = '';
@@ -288,25 +297,15 @@ function logout() { localStorage.clear(); window.location.href = "index.html"; }
 fetchRequests();
 
 function formatIST(dtStr) {
-  const utc = new Date(dtStr + 'Z');
-  const ist = new Date(utc.getTime() + 330 * 60000);
-  const dd = String(ist.getUTCDate()).padStart(2,'0');
-  const mm = String(ist.getUTCMonth()+1).padStart(2,'0');
-  const yyyy = ist.getUTCFullYear();
-  const hh = String(ist.getUTCHours()).padStart(2,'0');
-  const min = String(ist.getUTCMinutes()).padStart(2,'0');
-  return dd+'/'+mm+'/'+yyyy+', '+hh+':'+min;
+    const utc = new Date(dtStr + 'Z');
+    const ist = new Date(utc.getTime() + 330 * 60000);
+    const dd = String(ist.getUTCDate()).padStart(2,'0');
+    const mm = String(ist.getUTCMonth()+1).padStart(2,'0');
+    const yyyy = ist.getUTCFullYear();
+    const hh = String(ist.getUTCHours()).padStart(2,'0');
+    const min = String(ist.getUTCMinutes()).padStart(2,'0');
+    return dd+'/'+mm+'/'+yyyy+', '+hh+':'+min;
 }
 </script>
-
-    <div class="overlay" id="imgOverlay">
-  <div style="background:white;border-radius:16px;max-width:500px;width:100%;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3)">
-    <div class="popup-header"><h3>Vehicle Photo</h3><button class="btn-close" onclick="document.getElementById('imgOverlay').classList.remove('show')">✕</button></div>
-    <div style="padding:16px;text-align:center">
-      <img id="vehicleImgView" src="" style="width:100%;max-height:400px;object-fit:contain;border-radius:8px">
-    </div>
-  </div>
-</div>
-
 </body>
 </html>
