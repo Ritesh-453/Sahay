@@ -22,11 +22,11 @@ The intelligent platform connecting stranded drivers with professional mechanics
 
 | Login Page | Customer Dashboard |
 |---|---|
-| ![Login](https://sahay-n69u.onrender.com/index.html) | ![Customer](https://sahay-n69u.onrender.com/customer.html) |
+| ![Login](src/main/resources/static/assets/screenshots/login.png) | ![Customer](src/main/resources/static/assets/screenshots/customer.png) |
 
 | Sevak — Offline Chatbot | Shop Dashboard |
 |---|---|
-| ![Sevak](https://sahay-n69u.onrender.com/sevak.html) | ![Shop](https://sahay-n69u.onrender.com/shop-dashboard.html) |
+| ![Sevak](src/main/resources/static/assets/screenshots/sevak.png) | ![Shop](src/main/resources/static/assets/screenshots/shop.png) |
 
 ---
 
