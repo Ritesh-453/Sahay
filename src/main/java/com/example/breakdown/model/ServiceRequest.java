@@ -20,7 +20,7 @@ public class ServiceRequest {
     private Double latitude;
     private Double longitude;
 
-    // ✅ NEW: Mechanic details
+    // Mechanic details
     private String mechanicName;
     private String mechanicPhone;
     private String mechanicEta;
@@ -36,6 +36,20 @@ public class ServiceRequest {
 
     @Column(columnDefinition = "TEXT")
     private String reviewComment;
+
+    // ✅ NEW: Shop assignment fields
+    // ID of the shop currently assigned to this request
+    private Long assignedShopId;
+
+    // Comma-separated IDs of shops that already rejected (e.g. "1,3,7")
+    @Column(columnDefinition = "TEXT")
+    private String rejectedShopIds;
+
+    // Stage of assignment:
+    // "ASSIGNED"   → assigned to nearest shop (stage 1 or 2)
+    // "BROADCAST"  → rejected by top 2, now visible to all open shops within 50km
+    // "OPEN"       → nobody nearby, all open shops can see it
+    private String assignmentStage;
 
     @PrePersist
     public void onCreate() {
@@ -93,4 +107,13 @@ public class ServiceRequest {
 
     public String getReviewComment() { return reviewComment; }
     public void setReviewComment(String reviewComment) { this.reviewComment = reviewComment; }
+
+    public Long getAssignedShopId() { return assignedShopId; }
+    public void setAssignedShopId(Long assignedShopId) { this.assignedShopId = assignedShopId; }
+
+    public String getRejectedShopIds() { return rejectedShopIds; }
+    public void setRejectedShopIds(String rejectedShopIds) { this.rejectedShopIds = rejectedShopIds; }
+
+    public String getAssignmentStage() { return assignmentStage; }
+    public void setAssignmentStage(String assignmentStage) { this.assignmentStage = assignmentStage; }
 }

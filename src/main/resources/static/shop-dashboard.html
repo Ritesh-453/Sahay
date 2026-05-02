@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sahay — Admin Dashboard</title>
+    <title>Sahay — Shop Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <style>
@@ -18,17 +18,17 @@
             --stripe-purple: #635bff;
             --stripe-purple-bright: #7c74ff;
             --stripe-violet: #7c3aed;
-            --stripe-glow: rgba(99, 91, 255, 0.18);
+            --stripe-glow: rgba(99,91,255,0.18);
 
             --primary: #635bff;
             --primary-hover: #7c74ff;
-            --primary-light: rgba(99, 91, 255, 0.15);
+            --primary-light: rgba(99,91,255,0.15);
 
             --text-main: #eef0ff;
-            --text-muted: #5a6080;
             --text-secondary: #a8b0d8;
+            --text-muted: #5a6080;
             --border: rgba(255,255,255,0.08);
-            --border-accent: rgba(99, 91, 255, 0.4);
+            --border-accent: rgba(99,91,255,0.4);
 
             --success: #10b981;
             --error: #f43f5e;
@@ -50,172 +50,108 @@
             background: var(--bg-void);
             color: var(--text-main);
             min-height: 100vh;
-            display: flex;
         }
 
-        /* Sidebar Nav */
-        .sidebar {
-            width: 260px;
-            background: var(--bg-card);
-            border-right: 1px solid var(--border);
+        /* Navbar */
+        .navbar {
+            background: rgba(6,7,15,0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 0 32px;
+            height: 70px;
             display: flex;
-            flex-direction: column;
-            position: fixed;
-            height: 100vh;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
             z-index: 100;
-            box-shadow: 4px 0 24px rgba(0,0,0,0.3);
+            border-bottom: 1px solid var(--border);
         }
 
-        .brand-area {
-            padding: 24px;
+        .nav-brand {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-main);
             display: flex;
             align-items: center;
             gap: 12px;
-            border-bottom: 1px solid var(--border);
+            letter-spacing: -0.5px;
+            font-family: var(--font);
         }
 
         .brand-mark { width:44px; height:44px; display:flex; align-items:center; }
 
-        .brand-text { font-family: Arial, sans-serif; font-weight: 900; font-size: 28px; color: #ff6600; letter-spacing: -0.5px; }
-
-        .nav-links {
-            padding: 24px 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            flex: 1;
-        }
-
-        .nav-link {
+        .nav-right {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 12px 16px;
-            border-radius: var(--radius-sm);
-            color: var(--text-secondary);
-            font-weight: 600;
+            gap: 20px;
+        }
+
+        .nav-user {
             font-size: 14px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-family: var(--font);
+            color: var(--text-muted);
         }
-
-        .nav-link.active {
-            background: linear-gradient(135deg, rgba(99,91,255,0.2), rgba(124,58,237,0.15));
-            color: var(--stripe-purple-bright);
-            border: 1px solid rgba(99,91,255,0.25);
-        }
-
-        .nav-link:hover:not(.active) {
-            background: rgba(255,255,255,0.04);
-            color: var(--text-main);
-        }
-
-        .nav-link-icon { font-size: 18px; }
-
-        .nav-footer {
-            padding: 24px 16px;
-            border-top: 1px solid var(--border);
-        }
+        .nav-user strong { color: var(--text-main); font-weight: 600; }
 
         .btn-logout {
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            background: rgba(244, 63, 94, 0.08);
-            color: var(--error);
-            border: 1px solid rgba(244, 63, 94, 0.25);
-            padding: 10px;
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            padding: 8px 16px;
             border-radius: var(--radius-sm);
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
+            font-family: var(--font);
             transition: all 0.2s;
+        }
+        .btn-logout:hover {
+            background: rgba(244,63,94,0.08);
+            border-color: rgba(244,63,94,0.3);
+            color: var(--error);
+        }
+
+        /* Tabs */
+        .tab-bar {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            padding: 0 32px;
+            display: flex;
+            gap: 32px;
+        }
+
+        .tab-item {
+            padding: 20px 0;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            position: relative;
+            transition: color 0.2s;
             font-family: var(--font);
         }
 
-        .btn-logout:hover {
-            background: rgba(244, 63, 94, 0.15);
-            border-color: rgba(244, 63, 94, 0.4);
+        .tab-item:hover { color: var(--text-secondary); }
+        .tab-item.active { color: var(--stripe-purple-bright); }
+
+        .tab-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--stripe-purple), var(--stripe-violet));
+            border-radius: 3px 3px 0 0;
+            box-shadow: 0 -2px 12px rgba(99,91,255,0.5);
         }
 
         /* Main Content */
-        .main-content {
-            flex: 1;
-            margin-left: 260px;
-            padding: 32px;
-            max-width: 1200px;
-        }
+        .page { padding: 32px; max-width: 1400px; margin: 0 auto; }
+        .tab-content { display: none; animation: fadeIn 0.3s ease; }
+        .tab-content.active { display: block; }
 
-        /* Stats Grid */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-            margin-bottom: 32px;
-        }
-
-        .stat-card {
-            background: var(--bg-card);
-            border-radius: var(--radius-md);
-            padding: 24px;
-            border: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.25);
-            transition: all 0.25s ease;
-            position: relative;
-            overflow: hidden;
-        }
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, var(--stripe-purple), transparent);
-            opacity: 0.5;
-        }
-        .stat-card:hover {
-            border-color: var(--border-accent);
-            box-shadow: 0 6px 30px rgba(99,91,255,0.15);
-            transform: translateY(-2px);
-        }
-
-        .stat-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            flex-shrink: 0;
-        }
-
-        .stat-icon.total { background: rgba(99,91,255,0.15); color: var(--stripe-purple-bright); border: 1px solid rgba(99,91,255,0.25); }
-        .stat-icon.pending { background: rgba(245,158,11,0.12); color: #fbbf24; border: 1px solid rgba(245,158,11,0.2); }
-        .stat-icon.accepted { background: rgba(6,182,212,0.12); color: var(--info); border: 1px solid rgba(6,182,212,0.2); }
-        .stat-icon.completed { background: rgba(16,185,129,0.12); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
-
-        .stat-label {
-            font-size: 11px;
-            color: var(--text-muted);
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            margin-bottom: 4px;
-            font-family: var(--font);
-        }
-
-        .stat-value {
-            font-size: 30px;
-            color: var(--text-main);
-            font-weight: 700;
-            line-height: 1;
-            font-family: var(--font);
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         /* Section Header */
@@ -223,90 +159,49 @@
             display: flex;
             align-items: center;
             gap: 16px;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
         }
+        .section-header h2 { font-size: 20px; font-weight: 700; color: var(--text-main); letter-spacing: -0.5px; }
+        .section-header .line { flex: 1; height: 1px; background: linear-gradient(to right, var(--border), transparent); }
 
-        .section-header h2 {
-            font-size: 20px;
-            font-weight: 700;
-            color: var(--text-main);
-            letter-spacing: -0.5px;
-            font-family: var(--font);
-        }
-
-        .section-header .line {
-            flex: 1;
-            height: 1px;
-            background: linear-gradient(to right, var(--border), transparent);
-        }
-
-        /* Table Card */
+        /* Card & Table */
         .card {
             background: var(--bg-card);
             border-radius: var(--radius-lg);
             border: 1px solid var(--border);
             box-shadow: 0 4px 30px rgba(0,0,0,0.3);
             overflow: hidden;
+            margin-bottom: 32px;
         }
 
-        .table-wrapper {
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            min-width: 1200px;
-            border-collapse: separate;
-            border-spacing: 0;
-        }
-
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; min-width: 1200px; border-collapse: separate; border-spacing: 0; }
         thead th {
-            padding: 16px;
-            text-align: left;
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            white-space: nowrap;
-            background: var(--bg-dark);
-            border-bottom: 1px solid var(--border);
+            padding: 16px; text-align: left; font-size: 11px; font-weight: 600;
+            color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;
+            background: var(--bg-dark); border-bottom: 1px solid var(--border);
         }
-
         tbody tr { transition: background 0.2s; }
         tbody tr:hover { background: rgba(99,91,255,0.04); }
-        
         tbody td {
-            padding: 16px;
-            font-size: 13px;
-            color: var(--text-main);
-            white-space: nowrap;
+            padding: 16px; font-size: 13px; color: var(--text-main);
             border-bottom: 1px solid var(--border);
         }
-        
         tbody tr:last-child td { border-bottom: none; }
-
-        .id-col { color: var(--text-muted); font-size: 12px; }
         .strong-text { font-weight: 600; }
 
         /* Badges */
         .badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;
         }
-        .badge-pending { background: rgba(245, 158, 11, 0.1); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.2); }
-        .badge-accepted { background: rgba(59, 130, 246, 0.1); color: var(--info); border: 1px solid rgba(59, 130, 246, 0.2); }
-        .badge-completed { background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.2); }
-
+        .bp { background: rgba(245, 158, 11, 0.1); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.2); }
+        .ba { background: rgba(59, 130, 246, 0.1); color: var(--info); border: 1px solid rgba(59, 130, 246, 0.2); }
+        .bc { background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.2); }
         .badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; }
-        .badge-pending::before { background: var(--warning); animation: pulse-dot 1.5s infinite; }
-        .badge-accepted::before { background: var(--info); }
-        .badge-completed::before { background: var(--success); }
+        .bp::before { background: var(--warning); animation: pulse-dot 1.5s infinite; }
+        .ba::before { background: var(--info); }
+        .bc::before { background: var(--success); }
 
         @keyframes pulse-dot {
             0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
@@ -316,112 +211,102 @@
 
         /* Action Buttons */
         .btn-action {
-            background: transparent;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            font-family: var(--font);
-            transition: all 0.2s;
-            margin-right: 4px;
+            background: transparent; padding: 6px 12px; border-radius: 6px;
+            font-size: 12px; font-weight: 600; cursor: pointer; font-family: var(--font);
+            transition: all 0.2s; margin-right: 4px;
         }
-
+        .btn-acc { background: linear-gradient(135deg, var(--stripe-purple), var(--stripe-violet)); color: white; border: none; box-shadow: 0 2px 10px rgba(99,91,255,0.3); }
+        .btn-acc:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(99,91,255,0.45); }
+        .btn-rej { color: var(--error); border: 1px solid rgba(244,63,94,0.3); }
+        .btn-rej:hover { background: rgba(244,63,94,0.08); }
         .btn-complete { background: var(--success); color: white; border: none; }
         .btn-complete:hover { background: #059669; }
-
         .btn-done { background: var(--border); color: var(--text-muted); border: none; cursor: default; }
-
-        .btn-forward { color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.3); }
-        .btn-forward:hover { background: rgba(245, 158, 11, 0.1); }
-
         .btn-view-review { color: #a855f7; border: 1px solid rgba(168, 85, 247, 0.3); }
         .btn-view-review:hover { background: rgba(168, 85, 247, 0.1); }
-        
         .btn-view-img { color: var(--info); border: 1px solid rgba(59, 130, 246, 0.3); }
         .btn-view-img:hover { background: rgba(59, 130, 246, 0.1); }
 
         .stars-display { color: var(--warning); font-size: 14px; letter-spacing: 2px; }
 
+        /* Form Profile Grid */
+        .profile-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 32px;
+        }
+        .fg { margin-bottom: 20px; }
+        .fg label {
+            display: block; font-size: 12px; font-weight: 600; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;
+        }
+        .fg input, .fg select {
+            width: 100%; padding: 12px 16px; border: 1px solid var(--border);
+            border-radius: var(--radius-sm); font-size: 14px; font-family: var(--font-body);
+            color: var(--text-main); background: var(--bg-void); outline: none;
+            transition: all 0.2s;
+        }
+        .fg input:focus { border-color: var(--stripe-purple); box-shadow: 0 0 0 3px rgba(99,91,255,0.12); }
+
+        /* Branch List */
+        .branch-card {
+            background: var(--bg-void); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); padding: 20px; margin-bottom: 16px; position: relative;
+        }
+        .branch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .btn-remove-branch {
+            position: absolute; top: 16px; right: 16px; background: none; border: none;
+            color: var(--text-muted); cursor: pointer; font-size: 18px; transition: color 0.2s;
+        }
+        .btn-remove-branch:hover { color: var(--error); }
+        
+        .btn-add-branch {
+            background: transparent; color: var(--stripe-purple-bright); border: 1px dashed rgba(99,91,255,0.4);
+            padding: 10px 16px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600;
+            cursor: pointer; display: flex; align-items: center; gap: 8px; width: fit-content;
+            transition: all 0.2s; font-family: var(--font);
+        }
+        .btn-add-branch:hover { background: rgba(99,91,255,0.1); border-color: rgba(99,91,255,0.6); }
+
+        .btn-save-profile {
+            background: linear-gradient(135deg, var(--stripe-purple), var(--stripe-violet));
+            color: white; border: none; padding: 14px 32px; border-radius: var(--radius-sm);
+            font-size: 15px; font-weight: 600; cursor: pointer; font-family: var(--font);
+            box-shadow: 0 4px 16px rgba(99,91,255,0.3);
+            transition: all 0.2s; margin-left: 32px; margin-bottom: 32px;
+        }
+        .btn-save-profile:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(99,91,255,0.45); }
+
         /* Modals */
         .overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(6,7,15,0.85);
-            backdrop-filter: blur(4px);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-            padding: 16px;
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(6,7,15,0.85); backdrop-filter: blur(8px);
+            z-index: 1000; justify-content: center; align-items: center; padding: 16px;
         }
         .overlay.show { display: flex; animation: fadeIn 0.2s ease; }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
         .modal-base {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            box-shadow: 0 24px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(99,91,255,0.1);
-            width: 100%;
-            overflow: hidden;
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius-lg); box-shadow: 0 24px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(99,91,255,0.1);
+            width: 100%; overflow: hidden;
         }
-
         .mechanic-popup { max-width: 500px; }
         .review-view-pop { max-width: 400px; text-align: center; padding-bottom: 24px; }
         .img-pop { max-width: 500px; }
 
         .modal-head {
-            background: var(--bg-dark);
-            padding: 20px 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid var(--border);
+            background: var(--bg-dark); padding: 20px 24px; display: flex;
+            align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border);
         }
-
         .modal-head h3 { font-size: 16px; font-weight: 700; color: var(--text-main); }
-        
         .btn-x {
-            background: rgba(255, 255, 255, 0.05);
-            border: none;
-            color: var(--text-muted);
-            width: 32px; height: 32px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background 0.2s;
+            background: rgba(255, 255, 255, 0.05); border: none; color: var(--text-muted);
+            width: 32px; height: 32px; border-radius: 8px; cursor: pointer; font-size: 16px;
         }
         .btn-x:hover { background: rgba(255, 255, 255, 0.1); color: var(--text-main); }
-
         .modal-body { padding: 24px; }
 
         .popup-field { margin-bottom: 16px; }
-        .popup-field label {
-            display: block;
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
-        }
-        .popup-field input {
-            width: 100%;
-            padding: 12px 16px;
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            font-size: 14px;
-            font-family: var(--font-body);
-            color: var(--text-main);
-            background: var(--bg-void);
-            outline: none;
-            transition: all 0.2s;
-        }
+        .popup-field label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px; }
+        .popup-field input { width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; background: var(--bg-void); color: var(--text-main); outline: none; transition: all 0.2s; }
         .popup-field input:focus { border-color: var(--stripe-purple); box-shadow: 0 0 0 3px rgba(99,91,255,0.12); }
 
         .map-label { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
@@ -429,22 +314,8 @@
         #mLocDisplay { font-size: 13px; color: var(--success); font-weight: 500; min-height: 20px; margin-bottom: 20px; }
 
         .popup-actions { display: flex; gap: 12px; }
-        .btn-cancel {
-            flex: 1; padding: 12px;
-            background: transparent; color: var(--text-main);
-            border: 1px solid var(--border); border-radius: 8px;
-            font-size: 14px; font-weight: 600; cursor: pointer;
-        }
-        .btn-confirm {
-            flex: 2; padding: 12px;
-            background: linear-gradient(135deg, var(--stripe-purple), var(--stripe-violet));
-            color: white;
-            border: none; border-radius: var(--radius-sm);
-            font-size: 14px; font-weight: 600; cursor: pointer;
-            font-family: var(--font);
-            box-shadow: 0 4px 16px rgba(99,91,255,0.3);
-            transition: all 0.2s;
-        }
+        .btn-cancel { flex: 1; padding: 12px; background: transparent; color: var(--text-main); border: 1px solid var(--border); border-radius: 8px; font-weight: 600; cursor: pointer; }
+        .btn-confirm { flex: 2; padding: 12px; background: linear-gradient(135deg, var(--stripe-purple), var(--stripe-violet)); color: white; border: none; border-radius: var(--radius-sm); font-weight: 600; cursor: pointer; font-family: var(--font); box-shadow: 0 4px 16px rgba(99,91,255,0.3); transition: all 0.2s; }
         .btn-confirm:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(99,91,255,0.4); }
 
         /* Review Modal Specifics */
@@ -457,112 +328,123 @@
         .btn-close-rv { margin-top: 24px; padding: 10px 32px; background: rgba(255,255,255,0.06); color: var(--text-secondary); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
         .btn-close-rv:hover { background: rgba(99,91,255,0.15); border-color: var(--border-accent); color: var(--text-main); }
 
-        @media(max-width: 900px) {
-            .sidebar { transform: translateX(-100%); }
-            .main-content { margin-left: 0; padding: 20px; }
-            .stats-grid { grid-template-columns: repeat(2, 1fr); }
-        }
-        @media(max-width: 600px) {
-            .stats-grid { grid-template-columns: 1fr; }
+        @media(max-width: 768px) {
+            .page { padding: 20px; }
+            .navbar { padding: 0 20px; }
+            .profile-grid { grid-template-columns: 1fr; padding: 20px; }
+            .branch-grid { grid-template-columns: 1fr; }
+            .btn-save-profile { margin-left: 20px; }
         }
     </style>
 </head>
 <body>
 
-<aside class="sidebar">
-    <div class="brand-area">
+<nav class="navbar">
+    <div class="nav-brand">
         <img src="data:image/png;base64,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" class="brand-logo-img" style="width:40px;height:40px;object-fit:contain;">
-        <div class="brand-text">Sahay Admin</div>
+        Sahay Shop
     </div>
+    <div class="nav-right">
+        <span class="nav-user" style="display:none;" id="shopUserDisplay">Shop: <strong id="shopNameTxt"></strong></span>
+        <button class="btn-logout" onclick="logout()">Sign Out</button>
+    </div>
+</nav>
+
+<div class="tab-bar">
+    <div class="tab-item active" onclick="switchShopTab('reqTab')">Incoming Requests</div>
+    <div class="tab-item" onclick="switchShopTab('profTab')">Shop Profile</div>
+</div>
+
+<div class="page">
     
-    <div class="nav-links">
-        <div class="nav-link active">
-            <span class="nav-link-icon">📋</span>
-            All Requests
+    <!-- Requests Tab -->
+    <div class="tab-content active" id="reqTab">
+        <div class="section-header">
+            <h2>Service Queue</h2>
+            <div class="line"></div>
         </div>
-        <div class="nav-link" onclick="goToShops()">
-            <span class="nav-link-icon">🏪</span>
-            Manage Shops
-        </div>
-        <div class="nav-link" onclick="goToAnalytics()">
-            <span class="nav-link-icon">📊</span>
-            Analytics & Reports
-        </div>
-    </div>
-    
-    <div class="nav-footer">
-        <button class="btn-logout" onclick="logout()">
-            <span>🚪</span> Sign Out
-        </button>
-    </div>
-</aside>
-
-<main class="main-content">
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-icon total">📋</div>
-            <div>
-                <div class="stat-label">Total Requests</div>
-                <div class="stat-value" id="s-total">—</div>
-            </div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon pending">⏳</div>
-            <div>
-                <div class="stat-label">Pending</div>
-                <div class="stat-value" id="s-pending">—</div>
-            </div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon accepted">🔧</div>
-            <div>
-                <div class="stat-label">Accepted</div>
-                <div class="stat-value" id="s-accepted">—</div>
-            </div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon completed">✅</div>
-            <div>
-                <div class="stat-label">Completed</div>
-                <div class="stat-value" id="s-completed">—</div>
+        
+        <div class="card">
+            <div class="table-wrapper">
+                <table id="shopTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Customer</th>
+                            <th>Phone</th>
+                            <th>Vehicle</th>
+                            <th>Issue</th>
+                            <th>Location</th>
+                            <th>Status</th>
+                            <th>Submitted</th>
+                            <th>Image</th>
+                            <th>Review</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
             </div>
         </div>
     </div>
 
-    <div class="section-header">
-        <h2>Live Requests Dashboard</h2>
-        <div class="line"></div>
-    </div>
-
-    <div class="card">
-        <div class="table-wrapper">
-            <table id="adminTable">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Customer</th>
-                        <th>Phone</th>
-                        <th>Vehicle</th>
-                        <th>Issue</th>
-                        <th>Location</th>
-                        <th>Status</th>
-                        <th>Submitted At</th>
-                        <th>Image</th>
-                        <th>Review</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+    <!-- Profile Tab -->
+    <div class="tab-content" id="profTab">
+        <div class="section-header">
+            <h2>Shop Settings</h2>
+            <div class="line"></div>
+        </div>
+        
+        <div class="card">
+            <div class="profile-grid">
+                <div class="fg">
+                    <label>Shop Username</label>
+                    <input type="text" id="shopId" readonly style="color:var(--text-muted); opacity:0.8;">
+                </div>
+                <div class="fg">
+                    <label>Shop Name</label>
+                    <input type="text" id="shopName" readonly style="color:var(--text-muted); opacity:0.8;">
+                </div>
+                <div class="fg">
+                    <label>Owner Name</label>
+                    <input type="text" id="ownerName">
+                </div>
+                <div class="fg">
+                    <label>Phone</label>
+                    <input type="text" id="phone">
+                </div>
+                <div class="fg">
+                    <label>Email</label>
+                    <input type="email" id="email">
+                </div>
+                <div class="fg" style="display:flex; gap:16px;">
+                    <div style="flex:1">
+                        <label>Opening Time</label>
+                        <input type="time" id="openingTime">
+                    </div>
+                    <div style="flex:1">
+                        <label>Closing Time</label>
+                        <input type="time" id="closingTime">
+                    </div>
+                </div>
+            </div>
+            
+            <div style="padding: 0 32px; margin-bottom: 24px;">
+                <label style="display:block; font-size:12px; font-weight:600; color:var(--text-muted); text-transform:uppercase; margin-bottom:16px;">Branch Locations</label>
+                <div id="branchesList"></div>
+                <button type="button" class="btn-add-branch" onclick="addBranch()">+ Add Branch</button>
+            </div>
+            
+            <button class="btn-save-profile" onclick="saveProfile()">Save Changes</button>
         </div>
     </div>
-</main>
+</div>
 
-<!-- Assign Mechanic Overlay -->
-<div class="overlay" id="mechanicOverlay">
+<!-- Assign/Accept Mechanic Overlay -->
+<div class="overlay" id="acceptOverlay">
     <div class="modal-base mechanic-popup">
         <div class="modal-head">
-            <h3>Assign Mechanic Manually</h3>
+            <h3>Assign Mechanic</h3>
             <button class="btn-x" onclick="closePopup()">✕</button>
         </div>
         <div class="modal-body">
@@ -578,7 +460,7 @@
                 <label>Estimated Arrival Time</label>
                 <input type="text" id="mETA" placeholder="e.g. 30 mins / 4:30 PM">
             </div>
-            <p class="map-label">Click on map to set mechanic's location (optional)</p>
+            <p class="map-label">Click on map to set mechanic's starting location</p>
             <div id="mechanicMap"></div>
             <div id="mLocDisplay">No location selected.</div>
             <div class="popup-actions">
@@ -619,13 +501,33 @@
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
 const API = "http://localhost:8082";
+const sUser = localStorage.getItem("shopUsername");
+const sName = localStorage.getItem("shopName");
 const role = localStorage.getItem("role");
-if (!role || role !== "ADMIN") { alert("Access denied!"); window.location.href = "index.html"; }
 
-let currentRequestId = null, mechanicLat = null, mechanicLng = null;
-let mechanicMapInstance = null, mechanicMarker = null;
+if (!sUser || role !== "SHOP_OWNER") { alert("Access denied!"); window.location.href = "index.html"; }
+
+document.getElementById("shopNameTxt").innerText = sName || sUser;
+document.getElementById("shopUserDisplay").style.display = "inline";
+
+let currentRequestId = null;
+let mechanicLat = null;
+let mechanicLng = null;
+let mechanicMapInstance = null;
+let mechanicMarker = null;
 let allRequests = [];
 const starLabels = ["", "Poor", "Fair", "Good", "Very Good", "Excellent"];
+
+function switchShopTab(tabId) {
+    document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    
+    document.querySelector(`.tab-item[onclick="switchShopTab('${tabId}')"]`).classList.add('active');
+    document.getElementById(tabId).classList.add('active');
+    
+    if (tabId === 'profTab') fetchProfile();
+    else fetchShopRequests();
+}
 
 function showVehicleImage(id) {
     const req = allRequests.find(r => r.id == id);
@@ -635,38 +537,39 @@ function showVehicleImage(id) {
     }
 }
 
-function fetchRequests() {
-    fetch(API + "/api/requests")
-    .then(res => res.json())
+function showReview(rating, comment) {
+    let stars = '';
+    for (let i = 1; i <= 5; i++) stars += i <= rating ? '★' : '☆';
+    document.getElementById("rvStars").innerText = stars;
+    document.getElementById("rvLabel").innerText = starLabels[rating] + " — " + rating + " out of 5";
+    document.getElementById("rvComment").innerText = comment || "No comment provided.";
+    document.getElementById("reviewOverlay").classList.add("show");
+}
+
+function closeReviewPopup() { document.getElementById("reviewOverlay").classList.remove("show"); }
+
+function fetchShopRequests() {
+    fetch(API + "/api/shop/requests/" + sUser)
+    .then(r => r.json())
     .then(data => {
         allRequests = data;
-        const tbody = document.querySelector("#adminTable tbody");
-        tbody.innerHTML = "";
-        let pending=0, accepted=0, completed=0;
+        const tb = document.querySelector("#shopTable tbody");
+        tb.innerHTML = "";
         
         if (!data.length) {
-            tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--text-muted);padding:40px">No requests yet.</td></tr>';
-            document.getElementById("s-total").innerText = 0;
-            document.getElementById("s-pending").innerText = 0;
-            document.getElementById("s-accepted").innerText = 0;
-            document.getElementById("s-completed").innerText = 0;
+            tb.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--text-muted);padding:40px">No requests assigned to your shop.</td></tr>';
             return;
         }
-        
-        data.forEach(req => {
-            if (req.status === "Pending") pending++;
-            else if (req.status === "Accepted") accepted++;
-            else if (req.status === "Completed") completed++;
-            
-            const sc = req.status === "Pending" ? "badge-pending" : req.status === "Accepted" ? "badge-accepted" : "badge-completed";
 
-            // Action column
+        data.forEach(req => {
+            let sc = "badge-pending";
+            if (req.status === "Accepted") sc = "badge-accepted";
+            else if (req.status === "Completed") sc = "badge-completed";
+
             let action = '';
             if (req.status === "Pending") {
-                action = `<div style="display:flex; flex-direction:column; gap:6px;">
-                            <span style="color:var(--text-muted);font-size:11px;font-style:italic">Awaiting shop</span>
-                            <button class="btn-action btn-forward" onclick="forwardToNextShop(${req.id})" title="Forward to next available shop">⏩ Next Shop</button>
-                          </div>`;
+                action = `<button class="btn-action btn-acc" onclick="openAcceptPopup(${req.id})">Accept</button>
+                          <button class="btn-action btn-rej" onclick="rejectRequest(${req.id})">Reject</button>`;
             } else if (req.status === "Accepted") {
                 action = `<button class="btn-action btn-complete" onclick="updateStatus(${req.id}, 'Completed')">Mark Complete</button>`;
             } else {
@@ -692,8 +595,8 @@ function fetchRequests() {
                              </div>`;
             }
 
-            tbody.innerHTML += `<tr>
-                <td class="id-col">#${req.id}</td>
+            tb.innerHTML += `<tr>
+                <td style="color:var(--text-muted);font-size:12px;">#${req.id}</td>
                 <td class="strong-text">${req.customerName}</td>
                 <td>${req.phone || 'N/A'}</td>
                 <td>${req.vehicleNumber}</td>
@@ -706,46 +609,17 @@ function fetchRequests() {
                 <td>${action}</td>
             </tr>`;
         });
-        
-        document.getElementById("s-total").innerText = data.length;
-        document.getElementById("s-pending").innerText = pending;
-        document.getElementById("s-accepted").innerText = accepted;
-        document.getElementById("s-completed").innerText = completed;
-    })
-    .catch(() => alert("Failed to load requests."));
+    }).catch(e => console.error("Error fetching requests:", e));
 }
 
-function forwardToNextShop(id) {
-    if (!confirm('Forward this request to the next nearest available shop?')) return;
-    fetch(API + `/api/shop/requests/${id}/reject`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: 'ADMIN_FORWARD' })
-    })
-    .then(r => { if (!r.ok) throw new Error(); return r.json(); })
-    .then(() => { alert('Request forwarded to next shop!'); fetchRequests(); })
-    .catch(() => alert('Failed to forward request.'));
-}
-
-function showReview(rating, comment) {
-    let stars = '';
-    for (let i = 1; i <= 5; i++) stars += i <= rating ? '★' : '☆';
-    document.getElementById("rvStars").innerText = stars;
-    document.getElementById("rvLabel").innerText = starLabels[rating] + " — " + rating + " out of 5";
-    document.getElementById("rvComment").innerText = comment || "No comment provided.";
-    document.getElementById("reviewOverlay").classList.add("show");
-}
-
-function closeReviewPopup() { document.getElementById("reviewOverlay").classList.remove("show"); }
-
-function openMechanicPopup(requestId) {
+function openAcceptPopup(requestId) {
     currentRequestId = requestId;
     mechanicLat = null; mechanicLng = null;
     document.getElementById("mName").value = "";
     document.getElementById("mPhone").value = "";
     document.getElementById("mETA").value = "";
     document.getElementById("mLocDisplay").innerText = "No location selected.";
-    document.getElementById("mechanicOverlay").classList.add("show");
+    document.getElementById("acceptOverlay").classList.add("show");
     
     setTimeout(() => {
         if (mechanicMapInstance) { mechanicMapInstance.remove(); mechanicMapInstance = null; mechanicMarker = null; }
@@ -755,14 +629,14 @@ function openMechanicPopup(requestId) {
         mechanicMapInstance.on('click', function(e) {
             mechanicLat = e.latlng.lat; mechanicLng = e.latlng.lng;
             if (mechanicMarker) mechanicMapInstance.removeLayer(mechanicMarker);
-            mechanicMarker = L.marker([mechanicLat, mechanicLng]).addTo(mechanicMapInstance).bindPopup("Mechanic").openPopup();
+            mechanicMarker = L.marker([mechanicLat, mechanicLng]).addTo(mechanicMapInstance).bindPopup("Mechanic Location").openPopup();
             document.getElementById("mLocDisplay").innerText = mechanicLat.toFixed(4) + ", " + mechanicLng.toFixed(4);
         });
     }, 100);
 }
 
 function closePopup() {
-    document.getElementById("mechanicOverlay").classList.remove("show");
+    document.getElementById("acceptOverlay").classList.remove("show");
     if (mechanicMapInstance) { mechanicMapInstance.remove(); mechanicMapInstance = null; }
     currentRequestId = null;
 }
@@ -783,8 +657,20 @@ function confirmAccept() {
         })
     })
     .then(res => { if (!res.ok) throw new Error(); return res.json(); })
-    .then(() => { closePopup(); fetchRequests(); })
+    .then(() => { closePopup(); fetchShopRequests(); })
     .catch(() => alert("Failed to accept request."));
+}
+
+function rejectRequest(id) {
+    if (!confirm("Are you sure you want to reject this request? It will be sent to another shop.")) return;
+    fetch(API + `/api/shop/requests/${id}/reject`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: sUser })
+    })
+    .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+    .then(() => fetchShopRequests())
+    .catch(() => alert("Failed to reject request."));
 }
 
 function updateStatus(id, status) {
@@ -794,15 +680,107 @@ function updateStatus(id, status) {
         body: JSON.stringify({ status })
     })
     .then(res => { if (!res.ok) throw new Error(); return res.json(); })
-    .then(() => fetchRequests())
+    .then(() => fetchShopRequests())
     .catch(() => alert("Failed to update status."));
 }
 
-function goToAnalytics() { window.location.href = "analytics.html"; }
-function goToShops() { window.location.href = "shops.html"; }
+// ---- Shop Profile Logic ----
+let branchesArr = [];
+
+function fetchProfile() {
+    fetch(API + "/api/shop/profile/" + sUser)
+    .then(r => r.json())
+    .then(data => {
+        document.getElementById("shopId").value = data.username;
+        document.getElementById("shopName").value = data.shopName;
+        document.getElementById("ownerName").value = data.ownerName || '';
+        document.getElementById("phone").value = data.phone || '';
+        document.getElementById("email").value = data.email || '';
+        document.getElementById("openingTime").value = data.openingTime || '';
+        document.getElementById("closingTime").value = data.closingTime || '';
+        
+        branchesArr = [];
+        if (data.branchesJson) {
+            try {
+                const parsed = JSON.parse(data.branchesJson);
+                if (Array.isArray(parsed)) branchesArr = parsed;
+            } catch(e) {}
+        }
+        renderBranches();
+    })
+    .catch(() => alert("Failed to load profile"));
+}
+
+function renderBranches() {
+    const list = document.getElementById("branchesList");
+    list.innerHTML = "";
+    branchesArr.forEach((b, idx) => {
+        const div = document.createElement("div");
+        div.className = "branch-card";
+        div.innerHTML = `
+            <button type="button" class="btn-remove-branch" onclick="removeBranch(${idx})">✕</button>
+            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px; font-weight: 600;">BRANCH ${idx + 1}</div>
+            <div class="branch-grid">
+                <div class="fg" style="margin-bottom:0"><label>Name</label><input type="text" id="bName_${idx}" value="${b.name || ''}"></div>
+                <div class="fg" style="margin-bottom:0"><label>Address</label><input type="text" id="bAddr_${idx}" value="${b.address || ''}"></div>
+                <div class="fg" style="margin-bottom:0"><label>Latitude</label><input type="number" step="any" id="bLat_${idx}" value="${b.lat || ''}"></div>
+                <div class="fg" style="margin-bottom:0"><label>Longitude</label><input type="number" step="any" id="bLng_${idx}" value="${b.lng || ''}"></div>
+            </div>
+        `;
+        list.appendChild(div);
+    });
+}
+
+function addBranch() {
+    saveBranchStates();
+    branchesArr.push({ name: '', address: '', lat: '', lng: '' });
+    renderBranches();
+}
+
+function removeBranch(idx) {
+    saveBranchStates();
+    branchesArr.splice(idx, 1);
+    renderBranches();
+}
+
+function saveBranchStates() {
+    branchesArr.forEach((b, idx) => {
+        const n = document.getElementById(`bName_${idx}`);
+        const a = document.getElementById(`bAddr_${idx}`);
+        const lt = document.getElementById(`bLat_${idx}`);
+        const lg = document.getElementById(`bLng_${idx}`);
+        if(n) b.name = n.value;
+        if(a) b.address = a.value;
+        if(lt) b.lat = lt.value;
+        if(lg) b.lng = lg.value;
+    });
+}
+
+function saveProfile() {
+    const ownerName = document.getElementById("ownerName").value.trim();
+    const phone = document.getElementById("phone").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const openingTime = document.getElementById("openingTime").value;
+    const closingTime = document.getElementById("closingTime").value;
+
+    saveBranchStates();
+    const cleanBranches = branchesArr.filter(b => b.name.trim() !== "");
+
+    fetch(API + "/api/shop/profile/" + sUser, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            ownerName, phone, email, openingTime, closingTime,
+            branchesJson: JSON.stringify(cleanBranches)
+        })
+    })
+    .then(r => { if(r.ok) { alert("Profile saved!"); fetchProfile(); } else throw new Error(); })
+    .catch(() => alert("Failed to save profile."));
+}
+
 function logout() { localStorage.clear(); window.location.href = "index.html"; }
 
-fetchRequests();
+fetchShopRequests();
 
 function formatIST(dtStr) {
     const utc = new Date(dtStr + 'Z');

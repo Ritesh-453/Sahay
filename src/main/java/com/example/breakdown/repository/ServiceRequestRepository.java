@@ -11,4 +11,7 @@ public interface ServiceRequestRepository extends JpaRepository<ServiceRequest, 
 
     // For analytics: requests in date range
     List<ServiceRequest> findByCreatedAtBetween(LocalDateTime from, LocalDateTime to);
+
+    // For shop dashboard: pending requests only
+    List<ServiceRequest> findByStatus(String status);
 }

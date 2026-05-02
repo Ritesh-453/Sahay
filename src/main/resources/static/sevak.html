@@ -1,0 +1,1579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sevak — Roadside Assistant</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-void: #06070f;
+  --bg-deep: #0a0c1a;
+  --bg-dark: #0a0c1a;
+  --bg-card: #0f1120;
+  --bg-surface: #141729;
+  --bg-raised: #1a1f35;
+
+  --stripe-purple: #635bff;
+  --stripe-purple-bright: #7c74ff;
+  --stripe-violet: #7c3aed;
+  --stripe-glow: rgba(99,91,255,0.18);
+
+  --primary: #635bff;
+  --primary-hover: #7c74ff;
+  --primary-light: rgba(99,91,255,0.15);
+
+  --text-main: #eef0ff;
+  --text-secondary: #a8b0d8;
+  --text-muted: #5a6080;
+  --border: rgba(255,255,255,0.08);
+  --border-accent: rgba(99,91,255,0.4);
+
+  --success: #10b981;
+  --error: #f43f5e;
+  --warning: #f59e0b;
+  --info: #06b6d4;
+
+  --font: 'Sora', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg-void);
+  color: var(--text-main);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Navbar ── */
+.navbar {
+  background: rgba(6,7,15,0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 0 32px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-brand {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  letter-spacing: -0.5px;
+  text-decoration: none;
+}
+
+.brand-mark {
+  width: 44px; height: 44px;
+  background: linear-gradient(135deg, var(--stripe-purple), var(--stripe-violet));
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+}
+
+.nav-right {
+  display: flex; align-items: center; gap: 20px;
+}
+
+.btn-back {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-family: var(--font-body);
+  cursor: pointer;
+  text-decoration: none;
+  display: flex; align-items: center; gap: 6px;
+  transition: all 0.2s;
+}
+.btn-back:hover { background: var(--bg-raised); color: var(--text-main); }
+
+/* ── Layout ── */
+.page-wrap {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  height: calc(100vh - 70px);
+  overflow: hidden;
+}
+
+/* ── Sidebar / Categories ── */
+.sidebar {
+  background: var(--bg-card);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-header {
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-title {
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+}
+
+.search-box {
+  position: relative;
+}
+.search-box input {
+  width: 100%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-main);
+  font-family: var(--font-body);
+  font-size: 13px;
+  padding: 9px 12px 9px 34px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.search-box input::placeholder { color: var(--text-muted); }
+.search-box input:focus { border-color: var(--stripe-purple); }
+.search-icon {
+  position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+  color: var(--text-muted); font-size: 14px; pointer-events: none;
+}
+
+.category-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 0;
+}
+.category-list::-webkit-scrollbar { width: 4px; }
+.category-list::-webkit-scrollbar-track { background: transparent; }
+.category-list::-webkit-scrollbar-thumb { background: var(--bg-raised); border-radius: 2px; }
+
+.cat-group-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 12px 20px 4px;
+}
+
+.cat-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 20px;
+  cursor: pointer;
+  border-radius: 0;
+  transition: background 0.15s;
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  border-left: 2px solid transparent;
+}
+.cat-item:hover { background: var(--bg-surface); color: var(--text-main); }
+.cat-item.active {
+  background: var(--primary-light);
+  color: var(--stripe-purple-bright);
+  border-left-color: var(--stripe-purple);
+}
+.cat-icon { font-size: 16px; width: 20px; text-align: center; }
+
+/* ── Chat Area ── */
+.chat-area {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-void);
+}
+
+/* ── Welcome screen ── */
+.welcome-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  text-align: center;
+  gap: 20px;
+}
+.welcome-icon {
+  width: 80px; height: 80px;
+  background: linear-gradient(135deg, var(--stripe-purple), var(--stripe-violet));
+  border-radius: 24px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 36px;
+  box-shadow: 0 0 40px rgba(99,91,255,0.3);
+  animation: float 3s ease-in-out infinite;
+}
+@keyframes float {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.welcome-title {
+  font-family: var(--font);
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+.welcome-title span { color: var(--stripe-purple-bright); }
+.welcome-sub {
+  font-size: 15px;
+  color: var(--text-muted);
+  max-width: 420px;
+  line-height: 1.6;
+}
+
+.quick-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  max-width: 540px;
+  width: 100%;
+  margin-top: 10px;
+}
+.quick-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 12px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.quick-card:hover {
+  border-color: var(--border-accent);
+  background: var(--bg-surface);
+  color: var(--text-main);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(99,91,255,0.12);
+}
+.quick-card .qc-icon { font-size: 24px; margin-bottom: 8px; display: block; }
+.quick-card .qc-label { font-size: 12px; font-weight: 500; line-height: 1.3; }
+
+/* ── Chat conversation ── */
+.chat-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chat-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-card);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.chat-header-icon {
+  width: 40px; height: 40px;
+  background: var(--primary-light);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  border: 1px solid var(--border-accent);
+}
+.chat-header-text h3 {
+  font-family: var(--font);
+  font-size: 15px;
+  font-weight: 600;
+}
+.chat-header-text p { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.btn-home {
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: all 0.2s;
+}
+.btn-home:hover { background: var(--bg-raised); color: var(--text-main); }
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.messages::-webkit-scrollbar { width: 4px; }
+.messages::-webkit-scrollbar-track { background: transparent; }
+.messages::-webkit-scrollbar-thumb { background: var(--bg-raised); border-radius: 2px; }
+
+/* Bot message */
+.msg {
+  display: flex;
+  gap: 12px;
+  max-width: 82%;
+  animation: slideUp 0.25s ease;
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.msg.user { flex-direction: row-reverse; margin-left: auto; }
+.msg-avatar {
+  width: 36px; height: 36px; min-width: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--stripe-purple), var(--stripe-violet));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px;
+}
+.msg.user .msg-avatar {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+}
+.msg-bubble {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 4px 14px 14px 14px;
+  padding: 12px 16px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-main);
+}
+.msg.user .msg-bubble {
+  background: var(--primary-light);
+  border-color: var(--border-accent);
+  border-radius: 14px 4px 14px 14px;
+  color: var(--text-main);
+}
+
+/* Step buttons inside bot bubble */
+.step-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+.step-btn {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  padding: 9px 14px;
+  text-align: left;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: var(--font-body);
+  transition: all 0.2s;
+  display: flex; align-items: center; gap: 8px;
+}
+.step-btn:hover { background: var(--primary-light); border-color: var(--border-accent); color: var(--text-main); }
+.step-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Solution steps */
+.solution-steps {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sol-step {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 8px 10px;
+  background: rgba(99,91,255,0.07);
+  border-radius: var(--radius-sm);
+  border-left: 2px solid var(--stripe-purple);
+}
+.sol-num {
+  min-width: 22px; height: 22px;
+  background: var(--stripe-purple);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+}
+.sol-text { font-size: 13px; line-height: 1.5; color: var(--text-secondary); }
+
+/* Helpline cards */
+.helpline-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+.helpline-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.helpline-icon { font-size: 22px; }
+.helpline-info { flex: 1; }
+.helpline-name { font-size: 13px; font-weight: 600; color: var(--text-main); }
+.helpline-num { font-size: 14px; font-weight: 700; color: var(--stripe-purple-bright); margin-top: 2px; }
+.helpline-desc { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.call-btn {
+  background: var(--primary-light);
+  border: 1px solid var(--border-accent);
+  border-radius: var(--radius-sm);
+  color: var(--stripe-purple-bright);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  text-decoration: none;
+  display: flex; align-items: center; gap: 4px;
+}
+.call-btn:hover { background: var(--stripe-purple); color: #fff; }
+
+/* Input bar */
+.input-bar {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-card);
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.input-bar input {
+  flex: 1;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-main);
+  font-family: var(--font-body);
+  font-size: 14px;
+  padding: 11px 16px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.input-bar input::placeholder { color: var(--text-muted); }
+.input-bar input:focus { border-color: var(--stripe-purple); }
+.send-btn {
+  width: 42px; height: 42px;
+  background: var(--stripe-purple);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.2s, transform 0.1s;
+}
+.send-btn:hover { background: var(--stripe-purple-bright); }
+.send-btn:active { transform: scale(0.95); }
+
+/* Offline badge */
+.offline-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(16,185,129,0.12);
+  border: 1px solid rgba(16,185,129,0.3);
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 11px;
+  color: var(--success);
+  font-weight: 600;
+}
+.offline-dot {
+  width: 6px; height: 6px;
+  background: var(--success);
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%,100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* Typing indicator */
+.typing-indicator {
+  display: flex; gap: 4px; align-items: center; padding: 4px 0;
+}
+.typing-dot {
+  width: 7px; height: 7px;
+  background: var(--text-muted);
+  border-radius: 50%;
+  animation: typingBounce 1.2s infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typingBounce {
+  0%,60%,100% { transform: translateY(0); }
+  30% { transform: translateY(-6px); }
+}
+
+/* Feedback row */
+.feedback-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  align-items: center;
+}
+.feedback-label { font-size: 12px; color: var(--text-muted); }
+.fb-btn {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  color: var(--text-secondary);
+  transition: all 0.2s;
+}
+.fb-btn:hover { background: var(--primary-light); border-color: var(--border-accent); color: var(--text-main); }
+
+/* Responsive */
+@media (max-width: 700px) {
+  .page-wrap { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+  .quick-grid { grid-template-columns: repeat(2,1fr); }
+}
+
+/* no-result */
+.no-result {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+.no-result .nr-icon { font-size: 36px; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <a href="customer.html" class="nav-brand">
+    <img src="data:image/png;base64,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" style="width:44px;height:44px;object-fit:contain;border-radius:10px;">
+    Sahay
+  </a>
+  <div class="nav-right">
+    <span class="offline-badge"><span class="offline-dot"></span>Offline Ready</span>
+    <a href="customer.html" class="btn-back">← Back</a>
+  </div>
+</nav>
+
+<!-- Page -->
+<div class="page-wrap">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-title">Browse Problems</div>
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="sidebarSearch" placeholder="Search problem…" oninput="filterSidebar(this.value)">
+      </div>
+    </div>
+    <div class="category-list" id="categoryList"></div>
+  </aside>
+
+  <!-- Chat Area -->
+  <main class="chat-area" id="chatArea">
+
+    <!-- Welcome -->
+    <div class="welcome-screen" id="welcomeScreen">
+      <div class="welcome-icon">🤖</div>
+      <div>
+        <div class="welcome-title">Meet <span>Sevak</span></div>
+        <div style="font-size:13px; color:var(--text-muted); margin-top:4px; font-weight:500;">Your 24×7 Roadside Problem Solver</div>
+      </div>
+      <p class="welcome-sub">
+        Can't reach a mechanic? Sevak works completely offline and helps you handle 50+ common vehicle problems right where you are.
+      </p>
+      <div class="quick-grid" id="quickGrid"></div>
+    </div>
+
+    <!-- Chat screen (hidden initially) -->
+    <div class="chat-screen" id="chatScreen" style="display:none;">
+      <div class="chat-header" id="chatHeader">
+        <div class="chat-header-icon" id="chatHeaderIcon">🔧</div>
+        <div class="chat-header-text">
+          <h3 id="chatHeaderTitle">Problem</h3>
+          <p id="chatHeaderSub">Sevak is helping you</p>
+        </div>
+        <button class="btn-home" onclick="showWelcome()">🏠 All Topics</button>
+      </div>
+      <div class="messages" id="messages"></div>
+      <div class="input-bar">
+        <input type="text" id="userInput" placeholder="Type your question or reply…" onkeydown="if(event.key==='Enter') sendMessage()">
+        <button class="send-btn" onclick="sendMessage()" title="Send">➤</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════
+// SEVAK KNOWLEDGE BASE — 55+ PROBLEMS
+// ════════════════════════════════════════════════════════
+const KB = {
+  categories: [
+    {
+      id: "tyre",
+      label: "Tyre Problems",
+      icon: "🔵",
+      problems: [
+        {
+          id: "tyre_puncture",
+          title: "Tyre Puncture",
+          icon: "🔵",
+          tags: ["puncture","flat tyre","tyre flat","fuse"],
+          intro: "A flat or punctured tyre is very common. Here's how to handle it safely on the road.",
+          steps: [
+            "Pull over safely to the left side of the road, away from traffic.",
+            "Turn on your hazard lights immediately.",
+            "Apply the handbrake and place wheel wedges (stones) behind the opposite tyres.",
+            "Take out the spare tyre, jack, and wheel spanner from the boot.",
+            "Loosen the lug nuts slightly before jacking up the car.",
+            "Position the jack under the car's jacking point (near the flat tyre, on the frame rail).",
+            "Raise the car until the flat tyre is about 6 inches off the ground.",
+            "Remove the lug nuts fully and take off the flat tyre.",
+            "Mount the spare tyre and hand-tighten the lug nuts in a star pattern.",
+            "Lower the car, then fully tighten the lug nuts.",
+            "Check spare tyre pressure when possible. Visit a garage soon if it's a temporary spare (limited to 80 km/h)."
+          ]
+        },
+        {
+          id: "tyre_nokit",
+          title: "Puncture — No Spare Kit",
+          icon: "⚠️",
+          tags: ["no spare","no jack","no spanner","tyre no kit"],
+          intro: "No spare tyre or tools? Follow these steps to stay safe.",
+          steps: [
+            "Pull over safely on the left side, away from moving traffic.",
+            "Switch on hazard lights immediately.",
+            "Do NOT drive on the flat — you risk damaging the wheel rim.",
+            "Place a warning triangle 50 metres behind your vehicle.",
+            "Call National Highway Helpline: 1033 for assistance.",
+            "Many cities have 24-hour tyre puncture repair shops. Search offline maps for nearest one.",
+            "If you have tyre sealant foam (tubeless fix-a-flat), spray it into the valve — this can seal small punctures temporarily.",
+            "Contact roadside assistance: NH Helpline 1033 or your insurance company."
+          ]
+        },
+        {
+          id: "tyre_overheat",
+          title: "Tyre Overheating / Blowout",
+          icon: "💥",
+          tags: ["blowout","tyre burst","tyre heat","loud bang"],
+          intro: "A tyre blowout at speed is dangerous. Stay calm and follow these steps.",
+          steps: [
+            "Do NOT slam the brakes — this can cause you to lose control.",
+            "Grip the steering wheel firmly with both hands.",
+            "Ease off the accelerator gradually.",
+            "Steer straight and allow the car to slow down naturally.",
+            "Once speed drops below 40 km/h, gently steer to the left shoulder.",
+            "Bring the car to a full stop. Apply hazard lights.",
+            "Stay inside or get behind the guard rail if on a highway.",
+            "Call NH Helpline 1033 for highway assistance."
+          ]
+        },
+        {
+          id: "tyre_lowpressure",
+          title: "Low Tyre Pressure Warning",
+          icon: "🌡️",
+          tags: ["tyre pressure","TPMS","low pressure light"],
+          intro: "TPMS light on? Here's what to do.",
+          steps: [
+            "The TPMS warning light looks like an exclamation mark inside a flat tyre.",
+            "Slow down gradually — do not drive fast on under-inflated tyres.",
+            "Find a safe spot to stop and visually inspect all four tyres.",
+            "If a tyre looks obviously flat, follow the puncture fix steps.",
+            "If all tyres look okay, temperature changes can trigger the light — it may clear once pressure is checked.",
+            "Standard pressure is usually 30–35 PSI. Check your car door jamb sticker for the exact value.",
+            "Find the nearest petrol station to inflate the tyre.",
+            "If the light stays on after inflating, have the TPMS sensor checked at a garage."
+          ]
+        }
+      ]
+    },
+    {
+      id: "fuel",
+      label: "Fuel Problems",
+      icon: "⛽",
+      problems: [
+        {
+          id: "fuel_empty",
+          title: "Fuel Empty on Highway",
+          icon: "⛽",
+          tags: ["petrol empty","diesel empty","fuel finish","no fuel","out of fuel"],
+          intro: "Ran out of fuel on the highway? Stay calm — here's what to do and who to call.",
+          steps: [
+            "Put the car in neutral and coast to the left shoulder. Apply hazard lights.",
+            "Never stop in the middle of a highway lane.",
+            "Place a warning triangle 50 metres behind your vehicle.",
+            "Call the National Highway Helpline: <b>1033</b> — they can arrange fuel delivery.",
+            "Call your insurance emergency line — most policies cover fuel delivery.",
+            "For petrol/CNG vehicles, ask a passing motorist for a tow or contact nearest town.",
+            "Do NOT try to walk on the highway — wait inside or behind guard rail.",
+            "Once help arrives, add at least 2 litres minimum to restart the fuel system.",
+            "After refuelling, crank the ignition 2–3 times to prime the fuel pump before starting."
+          ],
+          helplines: [
+            { name: "NH Helpline", num: "1033", icon: "🛣️", desc: "National Highway emergency, fuel & breakdown" },
+            { name: "Police Highway Patrol", num: "100", icon: "🚔", desc: "Highway patrol for emergency assistance" },
+            { name: "Ambulance (if injured)", num: "108", icon: "🚑", desc: "Medical emergency on highway" }
+          ]
+        },
+        {
+          id: "fuel_wrong",
+          title: "Wrong Fuel Filled",
+          icon: "🚫",
+          tags: ["wrong fuel","petrol in diesel","diesel in petrol"],
+          intro: "Filled the wrong fuel? Do NOT start the engine.",
+          steps: [
+            "Do NOT turn the ignition on or start the engine — this pushes wrong fuel into the system.",
+            "If you're still at the petrol station, inform the staff immediately.",
+            "Call a mechanic to drain the fuel tank completely.",
+            "The fuel tank, lines, and injectors may need to be flushed.",
+            "If you started the engine already: stop as soon as possible and call a tow truck.",
+            "Wrong fuel can seriously damage injectors and fuel pumps — do not delay."
+          ]
+        },
+        {
+          id: "fuel_filter",
+          title: "Car Sputtering / Fuel Filter Issue",
+          icon: "🔄",
+          tags: ["car sputtering","engine stuttering","jerking","fuel filter"],
+          intro: "Car jerking or losing power? The fuel filter may be clogged.",
+          steps: [
+            "Pull over safely and turn off the engine.",
+            "Do not repeatedly crank a sputtering engine — this strains the fuel pump.",
+            "Check if the fuel gauge is very low — sometimes air gets into the line.",
+            "If fuel level is fine, the issue is likely a clogged fuel filter or weak fuel pump.",
+            "This is not a roadside fix — you need to be towed to a garage.",
+            "Call NH Helpline 1033 or a local tow service.",
+            "Avoid using the AC and all non-essential electronics to reduce load if limping to a garage."
+          ]
+        }
+      ]
+    },
+    {
+      id: "battery",
+      label: "Battery & Electrical",
+      icon: "🔋",
+      problems: [
+        {
+          id: "battery_dead",
+          title: "Dead Battery / Car Won't Start",
+          icon: "🔋",
+          tags: ["battery dead","wont start","no start","click sound","battery flat"],
+          intro: "Car clicks but doesn't start? Battery is likely dead. Here's how to jump-start it.",
+          steps: [
+            "You'll need jump-start cables and another vehicle with a working battery.",
+            "Park the working car nose-to-nose (or side by side) close to your car.",
+            "Both cars must be OFF before connecting cables.",
+            "Connect RED cable to dead battery POSITIVE (+) terminal.",
+            "Connect other end of RED cable to working battery POSITIVE (+) terminal.",
+            "Connect BLACK cable to working battery NEGATIVE (−) terminal.",
+            "Connect other end of BLACK cable to an unpainted metal surface on your car (not the dead battery!) — e.g., the engine block.",
+            "Start the working car and let it run for 2–3 minutes.",
+            "Try starting your car. If it starts, remove cables in REVERSE order (black first, then red).",
+            "Drive for at least 20–30 minutes to recharge the battery.",
+            "If it won't start after 3 attempts, the battery may need replacement."
+          ]
+        },
+        {
+          id: "battery_drain",
+          title: "Battery Draining Quickly",
+          icon: "📉",
+          tags: ["battery drain","battery weak","battery dies","charging issue"],
+          intro: "Battery keeps dying? Here's how to diagnose it.",
+          steps: [
+            "Check if any interior lights, AC, or accessories are left on when parked.",
+            "Inspect the battery terminals for white/greenish corrosion — this causes poor connection.",
+            "Clean terminals with a toothbrush and baking soda + water mixture.",
+            "Check that the alternator belt is intact and not slipping.",
+            "If battery is more than 3 years old, it may need replacement.",
+            "A healthy alternator charges at 13.5–14.5V when engine is running — check with a multimeter.",
+            "Visit a battery shop for a free load test to confirm."
+          ]
+        },
+        {
+          id: "electrical_fuse",
+          title: "Fuse Blown (Lights/AC Not Working)",
+          icon: "💡",
+          tags: ["fuse","lights not working","AC not working","fuse box","blown fuse"],
+          intro: "Something suddenly stopped working? A blown fuse is often the culprit.",
+          steps: [
+            "Locate the fuse box — usually under the dashboard (driver side) or under the bonnet.",
+            "Open the fuse box cover; there should be a diagram showing which fuse does what.",
+            "Look for a blown fuse — the metal strip inside will be broken or blackened.",
+            "Match the amperage (written on the fuse: 5A, 10A, 15A, 20A, etc.).",
+            "Remove the blown fuse with fuse pliers (or carefully with your nails).",
+            "Replace with a spare fuse of the SAME amperage. Never use a higher ampere fuse.",
+            "If the new fuse blows again immediately, there is a deeper electrical fault — visit a garage.",
+            "Most cars come with spare fuses in the fuse box cover."
+          ]
+        },
+        {
+          id: "alt_failure",
+          title: "Alternator Failure Warning",
+          icon: "⚡",
+          tags: ["alternator","battery light on","charging light","ALT warning"],
+          intro: "Battery warning light on while driving? The alternator may be failing.",
+          steps: [
+            "The battery/charging warning light looks like a battery symbol on your dashboard.",
+            "This usually means the alternator is not charging the battery while driving.",
+            "Turn off ALL non-essential electrical loads: AC, music, rear defog, etc.",
+            "Drive to the nearest garage or safe spot as quickly as possible.",
+            "The car may run for 20–30 minutes on battery alone before dying.",
+            "Do NOT turn the engine off unless safe — it may not restart.",
+            "Call ahead to a garage or call NH Helpline 1033 for highway."
+          ]
+        }
+      ]
+    },
+    {
+      id: "engine",
+      label: "Engine Problems",
+      icon: "⚙️",
+      problems: [
+        {
+          id: "engine_overheat",
+          title: "Engine Overheating",
+          icon: "🌡️",
+          tags: ["overheating","engine hot","temperature gauge high","steam from bonnet","coolant"],
+          intro: "Temperature gauge in the red? Act immediately to prevent engine damage.",
+          steps: [
+            "Turn off the AC immediately — it reduces engine load.",
+            "Turn on the heater to full blast — it draws heat away from the engine.",
+            "Pull over to a safe spot as soon as possible.",
+            "Turn off the engine and let it cool for at least 30 minutes before opening the bonnet.",
+            "NEVER open the radiator cap while the engine is hot — pressurised boiling coolant can cause severe burns.",
+            "After cooling, carefully check the coolant reservoir level.",
+            "If low, add coolant or plain water (temporary fix) to the reservoir (not directly to radiator when hot).",
+            "Check for coolant leaks under the car.",
+            "Do not drive if temperature gauge rises again — serious engine damage can result.",
+            "Call a mechanic or towing service. NH Helpline: 1033"
+          ]
+        },
+        {
+          id: "engine_check_light",
+          title: "Check Engine Light On",
+          icon: "🚨",
+          tags: ["check engine","engine light","MIL","engine warning light"],
+          intro: "Check engine light on? Here's how to assess urgency.",
+          steps: [
+            "If light is SOLID: issue is present but not immediately dangerous — schedule a garage visit soon.",
+            "If light is FLASHING: serious misfire or catalytic converter damage — reduce speed, avoid hard acceleration, visit garage immediately.",
+            "Do not ignore a flashing check engine light — it can cause expensive damage.",
+            "Check if the petrol cap is loose — a loose cap triggers this light. Tighten and drive a few km.",
+            "An OBD-II scanner (available cheaply) can read the fault code to identify the exact problem.",
+            "Common causes: O2 sensor, mass airflow sensor, spark plugs, catalytic converter.",
+            "Book a diagnostic scan at any multi-brand service centre."
+          ]
+        },
+        {
+          id: "engine_stall",
+          title: "Engine Stalls / Dies While Driving",
+          icon: "🔇",
+          tags: ["stall","engine dies","car stops suddenly","engine cuts off"],
+          intro: "Engine suddenly cut off while moving? Here's what to do.",
+          steps: [
+            "Steer to the left shoulder immediately using momentum.",
+            "Apply hazard lights and handbrake.",
+            "Try restarting after 30 seconds — sometimes a brief stall is a fluke.",
+            "If it won't restart: check fuel level, check battery connections.",
+            "Turn off AC and all accessories to reduce electrical load before retrying.",
+            "If the steering feels heavy (power steering loss), use firm force — it still works mechanically.",
+            "Common causes: fuel starvation, alternator failure, overheating, throttle body issue.",
+            "Call for roadside assistance. NH Helpline: 1033"
+          ]
+        },
+        {
+          id: "engine_noise",
+          title: "Knocking / Grinding Engine Noise",
+          icon: "🔔",
+          tags: ["engine knock","ticking noise","knocking","grinding","rattling"],
+          intro: "Strange sounds from the engine? Don't ignore them.",
+          steps: [
+            "Light ticking on startup (goes away after warming): usually low oil pressure — check oil level immediately.",
+            "Heavy knocking at all RPMs: possible bearing failure — stop driving immediately.",
+            "Grinding noise from belt area: check timing belt/serpentine belt for cracks.",
+            "Rattling under the car: heat shield or exhaust may be loose — usually not critical but should be fixed.",
+            "Check engine oil dipstick — if oil is very low or black and gritty, top up immediately.",
+            "If knocking continues after oil top-up, do NOT drive — call a tow truck.",
+            "Engine bearing damage from continued knocking can cost ₹50,000+."
+          ]
+        },
+        {
+          id: "oil_low",
+          title: "Low Engine Oil",
+          icon: "🛢️",
+          tags: ["oil low","oil pressure","low oil","oil light","oil warning"],
+          intro: "Oil pressure warning light on? This is urgent.",
+          steps: [
+            "Stop the car immediately if the oil pressure light (oil can symbol) comes on while driving.",
+            "Running with no oil pressure can destroy an engine in minutes.",
+            "Wait 5 minutes after stopping, then check the dipstick.",
+            "If oil is on the minimum mark or below, you can add oil to drive to a nearby garage.",
+            "Use the oil grade specified in your owner's manual (e.g., 5W-30, 10W-40).",
+            "If you have no oil, do NOT drive. Call for a tow.",
+            "Check for an oil leak under the car (dark puddle).",
+            "If you add oil and the light comes back on: serious internal leak — visit garage immediately."
+          ]
+        }
+      ]
+    },
+    {
+      id: "brakes",
+      label: "Brakes & Steering",
+      icon: "🛑",
+      problems: [
+        {
+          id: "brake_fail",
+          title: "Brake Failure Emergency",
+          icon: "🛑",
+          tags: ["brakes fail","no brakes","brake not working","brake failure"],
+          intro: "Complete brake failure is rare but life-threatening. Here's the emergency procedure.",
+          steps: [
+            "Stay calm. You still have tools to stop the car.",
+            "Pump the brake pedal rapidly — this can build up hydraulic pressure in partial failures.",
+            "Downshift to lower gears (2nd, then 1st) to use engine braking.",
+            "Apply the handbrake (emergency brake) firmly and gradually — not a sudden jerk.",
+            "Steer off the road onto grass, gravel, or an uphill slope to slow the car.",
+            "If you must collide, choose a soft target: bushes, grass, or a flat wall rather than another vehicle.",
+            "After stopping safely, DO NOT drive the car. Call for a tow immediately.",
+            "Brake failure is usually caused by brake fluid leak, worn pads, or a broken line."
+          ]
+        },
+        {
+          id: "brake_noise",
+          title: "Brakes Squealing / Grinding",
+          icon: "📢",
+          tags: ["brakes squealing","brake noise","grinding brakes","brake screech"],
+          intro: "Noise when braking? Here's what it means.",
+          steps: [
+            "High-pitched squeal: brake wear indicator is warning you — pads need replacement soon.",
+            "Metal-on-metal grinding: pads are fully worn through — URGENT, stop driving immediately.",
+            "Grinding when first driving in morning (wet climate): usually surface rust on discs, disappears after a few stops.",
+            "Brakes pulling to one side: caliper may be seized or pad worn unevenly.",
+            "Spongy brake pedal: air in the brake lines or brake fluid leak.",
+            "Visit a garage for brake inspection. Never delay grinding brakes — rotor damage adds to cost."
+          ]
+        },
+        {
+          id: "steering_heavy",
+          title: "Heavy / Hard Steering",
+          icon: "🎯",
+          tags: ["heavy steering","hard to steer","power steering","steering fluid"],
+          intro: "Steering suddenly feels heavy or stiff?",
+          steps: [
+            "In cars with power steering: check the power steering fluid reservoir under the bonnet.",
+            "Low power steering fluid causes sudden stiffening — top up if low.",
+            "Check for a snapped or loose power steering belt.",
+            "Electric power steering (newer cars): a warning light usually comes on. Turn engine off and on.",
+            "If steering is heavy at low speeds but fine at high: power steering pump likely failing.",
+            "Do not drive long distances with heavy steering — it is fatiguing and unsafe.",
+            "Get it checked at a garage for belt and fluid condition."
+          ]
+        }
+      ]
+    },
+    {
+      id: "cooling",
+      label: "Cooling & Fluids",
+      icon: "💧",
+      problems: [
+        {
+          id: "coolant_leak",
+          title: "Coolant Leak",
+          icon: "💧",
+          tags: ["coolant leak","antifreeze","green fluid","radiator leak","water leak engine"],
+          intro: "Seeing coloured fluid under the car or sweet smell? Likely a coolant leak.",
+          steps: [
+            "Coolant is usually green, pink, or orange. A sweet smell is a telltale sign.",
+            "Do not drive with a major coolant leak — engine will overheat.",
+            "Allow the car to cool completely before inspecting.",
+            "Check the reservoir, radiator hoses, and clamps for cracks or loose connections.",
+            "A minor hose leak can be temporarily wrapped with duct tape or hose repair tape.",
+            "Top up the coolant reservoir with the appropriate coolant or plain water (temporary only).",
+            "Watch the temperature gauge closely. If it climbs, pull over immediately.",
+            "Get the leak properly fixed at a garage — do not use just water long-term."
+          ]
+        },
+        {
+          id: "ac_not_working",
+          title: "AC Not Cooling",
+          icon: "❄️",
+          tags: ["AC not cooling","ac not working","air conditioner","hot air from AC"],
+          intro: "AC blowing hot air? Here are the likely causes.",
+          steps: [
+            "Check if the AC compressor is engaging — you should hear a slight click when turning on AC.",
+            "Low refrigerant (gas) is the most common cause — this needs a garage recharge.",
+            "Check if the AC cabin filter is clogged — a dirty filter reduces cooling drastically.",
+            "Cabin filter is usually behind the glovebox — clean or replace it.",
+            "Condenser (in front of radiator) may be blocked with dust/leaves — clean with gentle water spray.",
+            "If AC compressor clutch is slipping or not engaging, it needs garage attention.",
+            "As a temporary measure, park in shade and use ventilation mode to cool the car first."
+          ]
+        }
+      ]
+    },
+    {
+      id: "transmission",
+      label: "Transmission & Clutch",
+      icon: "⚙️",
+      problems: [
+        {
+          id: "clutch_slipping",
+          title: "Clutch Slipping",
+          icon: "🔩",
+          tags: ["clutch slip","clutch smell","clutch","car not moving forward","gear slip"],
+          intro: "Engine revving but car not moving properly? Clutch may be slipping.",
+          steps: [
+            "Burning rubber smell + engine revving without acceleration = clutch slip.",
+            "Avoid aggressive acceleration until you reach a garage.",
+            "Do not ride the clutch pedal — release it fully when not changing gears.",
+            "On hills, avoid holding the car on clutch — use handbrake instead.",
+            "A slipping clutch cannot be repaired roadside — it needs replacement.",
+            "Drive gently to the nearest garage avoiding steep inclines.",
+            "Clutch replacement cost in India: ₹3,000–₹15,000 depending on car model."
+          ]
+        },
+        {
+          id: "gear_stuck",
+          title: "Gear Stuck / Gear Not Engaging",
+          icon: "🔐",
+          tags: ["gear stuck","cant change gear","gear not engaging","gearbox","transmission"],
+          intro: "Can't shift gears? Here's what to check.",
+          steps: [
+            "Manual: Ensure you're pressing the clutch fully to the floor before shifting.",
+            "Manual: If gear won't engage, engine may be slightly revving — match revs before shifting.",
+            "Automatic: Ensure the car is fully stopped before shifting to P or R.",
+            "Automatic: Check if shift-lock is engaged — press the brake pedal fully while shifting.",
+            "Automatic shift interlock: there's usually an override slot near the gear lever (slot with a pin hole) — insert a key/pin to override in emergencies.",
+            "If grinding occurs when shifting: synchroniser or gearbox issue — avoid forcing gears.",
+            "Call a mechanic if the gearbox is stuck — forced shifting causes expensive damage."
+          ]
+        }
+      ]
+    },
+    {
+      id: "lights",
+      label: "Lights & Visibility",
+      icon: "💡",
+      problems: [
+        {
+          id: "headlight_out",
+          title: "Headlight / Taillight Not Working",
+          icon: "💡",
+          tags: ["headlight","bulb","tail light","indicator","light not working"],
+          intro: "A light out can get you fined or cause accidents. Here's a quick fix.",
+          steps: [
+            "First check the fuse for the relevant light circuit (see fuse box diagram).",
+            "If fuse is fine, the bulb has burned out.",
+            "Most headlight bulbs can be accessed from behind the headlight assembly under the bonnet.",
+            "Turn the dust cover anti-clockwise, disconnect the wiring plug, and twist the bulb holder.",
+            "Replace with the same bulb type (H4, H7, H11, etc. — check the old bulb or manual).",
+            "Do NOT touch a halogen bulb glass with bare fingers — oil from skin shortens its life. Use cloth.",
+            "Indicator bulb replacement: usually accessible by opening the boot or removing a panel.",
+            "If you can't fix it before night: use hazard lights sparingly and drive with high beams, or avoid night driving."
+          ]
+        },
+        {
+          id: "wiper_fail",
+          title: "Wipers Not Working / Streaking",
+          icon: "🌧️",
+          tags: ["wiper","windscreen","rain","wiper not working","streaking wiper"],
+          intro: "Wipers failing in rain is dangerous. Here's what to check.",
+          steps: [
+            "Check the wiper fuse first — it's the most common cause of complete wiper failure.",
+            "Lift the wiper arms off the windscreen and inspect the rubber blade for cracks or folds.",
+            "A folded rubber blade causes streaking — gently straighten it.",
+            "For heavily streaking wipers: wipe the blade and windscreen with rubbing alcohol.",
+            "Top up windscreen washer fluid if the washer isn't spraying.",
+            "Wiper blades should be replaced every 6–12 months or whenever streaking starts.",
+            "In an emergency with no working wipers: drive slowly, crack the window to see, stop if visibility is zero."
+          ]
+        }
+      ]
+    },
+    {
+      id: "keys",
+      label: "Keys & Locks",
+      icon: "🔑",
+      problems: [
+        {
+          id: "key_locked_in",
+          title: "Keys Locked Inside Car",
+          icon: "🔑",
+          tags: ["keys locked inside","locked out","car locked","key inside"],
+          intro: "Locked yourself out? Here's what to do without damaging the car.",
+          steps: [
+            "Check all doors and the boot — sometimes one is unlocked.",
+            "Do you have a spare key? Call someone to bring it.",
+            "Try your car app (if your car has connected car features) to unlock remotely.",
+            "Call your car manufacturer's roadside assistance (e.g., Maruti 1800-102-1800, Hyundai 1800-258-8890, Tata 1800-209-7979).",
+            "Call a locksmith — they can open most cars without damage.",
+            "Roadside Assistance via NH Helpline 1033 can connect you to help.",
+            "Do NOT try to break the window unless there is a medical emergency (baby/pet inside in heat).",
+            "Slim jim (wire) techniques can damage door seals and locking mechanisms — best left to professionals."
+          ],
+          helplines: [
+            { name: "Maruti Suzuki Assist", num: "1800-102-1800", icon: "🚗", desc: "24×7 Maruti roadside assistance" },
+            { name: "Hyundai Assist", num: "1800-258-8890", icon: "🚙", desc: "Hyundai roadside assistance" },
+            { name: "Tata Motors Assist", num: "1800-209-7979", icon: "🚕", desc: "Tata Motors roadside help" },
+            { name: "NH Helpline", num: "1033", icon: "🛣️", desc: "National Highway emergency" }
+          ]
+        },
+        {
+          id: "key_fob_dead",
+          title: "Key Fob / Smart Key Not Working",
+          icon: "📡",
+          tags: ["key fob","remote key","smart key","key battery","car remote not working"],
+          intro: "Remote/smart key stopped working? Usually a simple fix.",
+          steps: [
+            "The key fob battery is usually a CR2032 coin cell — flat batteries are the #1 cause.",
+            "Try holding the fob closer to the door handle or start button.",
+            "Most smart keys have a hidden mechanical key inside — slide the button and extract it.",
+            "Use the mechanical key to unlock the door manually.",
+            "For start button: hold the key fob directly against the start button and press — many cars work even with a dead fob.",
+            "Replace the CR2032 battery (available at any pharmacy or electronics shop for ₹30–50).",
+            "If problem persists after new battery: key may need re-programming at the dealer."
+          ]
+        }
+      ]
+    },
+    {
+      id: "highway",
+      label: "Highway Emergencies",
+      icon: "🛣️",
+      problems: [
+        {
+          id: "highway_accident",
+          title: "Minor Accident on Highway",
+          icon: "🚗💥",
+          tags: ["accident","collision","hit","crash","highway accident"],
+          intro: "Had a minor collision? Stay safe and follow these steps.",
+          steps: [
+            "Move the vehicle off the carriageway to the left if it can be driven safely.",
+            "Turn on hazard lights. Place warning triangle 50m behind the vehicle.",
+            "Check yourself and all passengers for injuries.",
+            "Call 100 (Police) to report the accident.",
+            "Call 108 if anyone is injured.",
+            "Exchange details with the other party: name, phone, vehicle number, insurance.",
+            "Take photos of both vehicles, the scene, and damage before moving.",
+            "Do NOT move seriously injured people unless there's fire risk.",
+            "Contact your insurance company's helpline to register the claim.",
+            "NH Helpline 1033 can coordinate police, ambulance, and towing."
+          ],
+          helplines: [
+            { name: "Police", num: "100", icon: "🚔", desc: "Report accident and get help" },
+            { name: "Ambulance", num: "108", icon: "🚑", desc: "Medical emergency" },
+            { name: "NH Helpline", num: "1033", icon: "🛣️", desc: "Highway emergency coordination" },
+            { name: "Fire Service", num: "101", icon: "🚒", desc: "If vehicle catches fire" }
+          ]
+        },
+        {
+          id: "highway_towing",
+          title: "Need Towing on Highway",
+          icon: "🏗️",
+          tags: ["tow","towing","tow truck","breakdown towing","drag"],
+          intro: "Need a tow? Here's how to arrange it safely.",
+          steps: [
+            "Call NH Helpline 1033 — they coordinate free or subsidised towing on national highways.",
+            "Call your car manufacturer's roadside assistance for free towing if under warranty.",
+            "Call your motor insurance company — many include roadside assistance.",
+            "If using local towing: agree on the price and destination BEFORE they hook up.",
+            "Ensure the tow driver uses proper wheel-lift or flatbed for your car type.",
+            "All-wheel drive cars MUST use a flatbed — a regular tow can damage the drivetrain.",
+            "Automatic cars should ideally be towed on a flatbed (not dolly-tow) to avoid transmission damage.",
+            "Note the tow truck number and driver's name for safety."
+          ],
+          helplines: [
+            { name: "NH Helpline", num: "1033", icon: "🛣️", desc: "Free towing on national highways" },
+            { name: "Police (Highway Patrol)", num: "100", icon: "🚔", desc: "Can coordinate towing help" }
+          ]
+        },
+        {
+          id: "car_fire",
+          title: "Car Fire Emergency",
+          icon: "🔥",
+          tags: ["fire","car fire","smoke from bonnet","burning smell","engine fire"],
+          intro: "This is a life-threatening emergency. Act immediately.",
+          steps: [
+            "STOP the car immediately. Pull over to the left.",
+            "TURN OFF the engine — cut fuel supply.",
+            "GET EVERYONE OUT of the car immediately. Do not gather belongings.",
+            "MOVE at least 30 metres away from the vehicle.",
+            "CALL 101 (Fire Service) and 1033 (NH Helpline) immediately.",
+            "Do NOT try to extinguish a large fire — fuel tanks can explode.",
+            "A small under-bonnet fire: only attempt with a fire extinguisher if trained and the fire is tiny.",
+            "Do NOT open the bonnet if fire is inside — oxygen feeds the fire.",
+            "Wait for fire brigade. Ensure everyone is accounted for."
+          ],
+          helplines: [
+            { name: "Fire Service", num: "101", icon: "🚒", desc: "Fire emergency response" },
+            { name: "Ambulance", num: "108", icon: "🚑", desc: "Injury medical emergency" },
+            { name: "Police", num: "100", icon: "🚔", desc: "Emergency coordination" },
+            { name: "NH Helpline", num: "1033", icon: "🛣️", desc: "Highway emergency coordination" }
+          ]
+        }
+      ]
+    },
+    {
+      id: "helplines",
+      label: "All Helpline Numbers",
+      icon: "📞",
+      problems: [
+        {
+          id: "all_helplines",
+          title: "All Emergency Helplines",
+          icon: "📞",
+          tags: ["helpline","number","call","emergency","contact"],
+          intro: "All important emergency and roadside assistance numbers in one place.",
+          steps: [],
+          helplines: [
+            { name: "NH Helpline", num: "1033", icon: "🛣️", desc: "National Highway breakdown, fuel, towing, accidents" },
+            { name: "Police", num: "100", icon: "🚔", desc: "Any highway emergency, accident, crime" },
+            { name: "Ambulance", num: "108", icon: "🚑", desc: "Medical emergency anywhere in India" },
+            { name: "Fire Service", num: "101", icon: "🚒", desc: "Fire, vehicle fire emergency" },
+            { name: "Unified Emergency", num: "112", icon: "🆘", desc: "All emergencies — police, ambulance, fire" },
+            { name: "Maruti Suzuki Assist", num: "1800-102-1800", icon: "🚗", desc: "24×7 free Maruti roadside assistance" },
+            { name: "Hyundai Assist", num: "1800-258-8890", icon: "🚙", desc: "Hyundai roadside assistance" },
+            { name: "Tata Motors Assist", num: "1800-209-7979", icon: "🚕", desc: "Tata Motors roadside help" },
+            { name: "Honda Assist", num: "1800-708-6000", icon: "🚗", desc: "Honda roadside assistance" },
+            { name: "Toyota Assist", num: "1800-425-0001", icon: "🚙", desc: "Toyota emergency assistance" },
+            { name: "Mahindra Assist", num: "1800-209-6006", icon: "🚐", desc: "Mahindra roadside assistance" },
+            { name: "Kia Assist", num: "1800-108-5000", icon: "🚗", desc: "Kia roadside assistance" },
+            { name: "Women Helpline", num: "1091", icon: "👩", desc: "Women in distress on highway" },
+            { name: "Child Helpline", num: "1098", icon: "👶", desc: "Child emergency" },
+            { name: "NHAI Helpline", num: "1033", icon: "🛣️", desc: "NHAI highway assistance" }
+          ]
+        }
+      ]
+    }
+  ]
+};
+
+// ════════════════════════════════════════════════════════
+// FLATTEN ALL PROBLEMS
+// ════════════════════════════════════════════════════════
+const allProblems = [];
+KB.categories.forEach(cat => {
+  cat.problems.forEach(p => allProblems.push({ ...p, catIcon: cat.icon }));
+});
+
+// ════════════════════════════════════════════════════════
+// RENDER SIDEBAR
+// ════════════════════════════════════════════════════════
+function renderSidebar(filter = '') {
+  const list = document.getElementById('categoryList');
+  list.innerHTML = '';
+  const lf = filter.toLowerCase();
+
+  KB.categories.forEach(cat => {
+    const matchingProblems = cat.problems.filter(p =>
+      !lf ||
+      p.title.toLowerCase().includes(lf) ||
+      (p.tags || []).some(t => t.includes(lf))
+    );
+    if (!matchingProblems.length) return;
+
+    const label = document.createElement('div');
+    label.className = 'cat-group-label';
+    label.textContent = cat.label;
+    list.appendChild(label);
+
+    matchingProblems.forEach(p => {
+      const item = document.createElement('div');
+      item.className = 'cat-item';
+      item.id = 'cat_' + p.id;
+      item.innerHTML = `<span class="cat-icon">${p.icon}</span>${p.title}`;
+      item.onclick = () => openProblem(p.id);
+      list.appendChild(item);
+    });
+  });
+
+  if (!list.children.length) {
+    list.innerHTML = `<div class="no-result"><div class="nr-icon">🔍</div>No results for "<b>${filter}</b>"</div>`;
+  }
+}
+
+function filterSidebar(val) { renderSidebar(val); }
+
+// ════════════════════════════════════════════════════════
+// RENDER QUICK GRID
+// ════════════════════════════════════════════════════════
+function renderQuickGrid() {
+  const grid = document.getElementById('quickGrid');
+  const highlights = [
+    'tyre_puncture','fuel_empty','battery_dead','engine_overheat',
+    'brake_fail','car_fire','highway_accident','all_helplines','key_locked_in'
+  ];
+  highlights.forEach(id => {
+    const p = allProblems.find(x => x.id === id);
+    if (!p) return;
+    const card = document.createElement('div');
+    card.className = 'quick-card';
+    card.innerHTML = `<span class="qc-icon">${p.icon}</span><span class="qc-label">${p.title}</span>`;
+    card.onclick = () => openProblem(p.id);
+    grid.appendChild(card);
+  });
+}
+
+// ════════════════════════════════════════════════════════
+// SHOW / HIDE SCREENS
+// ════════════════════════════════════════════════════════
+function showWelcome() {
+  document.getElementById('welcomeScreen').style.display = '';
+  document.getElementById('chatScreen').style.display = 'none';
+  document.querySelectorAll('.cat-item').forEach(el => el.classList.remove('active'));
+}
+
+function showChat() {
+  document.getElementById('welcomeScreen').style.display = 'none';
+  document.getElementById('chatScreen').style.display = '';
+}
+
+// ════════════════════════════════════════════════════════
+// OPEN A PROBLEM
+// ════════════════════════════════════════════════════════
+function openProblem(problemId) {
+  const p = allProblems.find(x => x.id === problemId);
+  if (!p) return;
+
+  // Sidebar highlight
+  document.querySelectorAll('.cat-item').forEach(el => el.classList.remove('active'));
+  const catEl = document.getElementById('cat_' + problemId);
+  if (catEl) catEl.classList.add('active');
+
+  // Update header
+  document.getElementById('chatHeaderIcon').textContent = p.icon;
+  document.getElementById('chatHeaderTitle').textContent = p.title;
+  document.getElementById('chatHeaderSub').textContent = 'Sevak is guiding you';
+
+  showChat();
+
+  const msgs = document.getElementById('messages');
+  msgs.innerHTML = '';
+
+  // Bot intro message
+  addBotMessage(buildSolutionHTML(p));
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+// ════════════════════════════════════════════════════════
+// BUILD SOLUTION HTML
+// ════════════════════════════════════════════════════════
+function buildSolutionHTML(p) {
+  let html = `<div style="font-size:15px; font-weight:600; margin-bottom:8px;">${p.icon} ${p.title}</div>`;
+  html += `<div style="font-size:13.5px; color:var(--text-secondary); line-height:1.6; margin-bottom:12px;">${p.intro}</div>`;
+
+  if (p.steps && p.steps.length) {
+    html += `<div style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.8px; margin-bottom:8px;">Steps to Follow</div>`;
+    html += `<div class="solution-steps">`;
+    p.steps.forEach((s, i) => {
+      html += `<div class="sol-step">
+        <div class="sol-num">${i+1}</div>
+        <div class="sol-text">${s}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  if (p.helplines && p.helplines.length) {
+    html += `<div style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.8px; margin-top:16px; margin-bottom:8px;">📞 Emergency Numbers</div>`;
+    html += `<div class="helpline-grid">`;
+    p.helplines.forEach(h => {
+      html += `<div class="helpline-card">
+        <div class="helpline-icon">${h.icon}</div>
+        <div class="helpline-info">
+          <div class="helpline-name">${h.name}</div>
+          <div class="helpline-num">${h.num}</div>
+          <div class="helpline-desc">${h.desc}</div>
+        </div>
+        <a href="tel:${h.num}" class="call-btn">📞 Call</a>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  html += `<div class="feedback-row">
+    <span class="feedback-label">Was this helpful?</span>
+    <button class="fb-btn" onclick="this.textContent='👍 Thanks!'; this.style.color='var(--success)'">👍 Yes</button>
+    <button class="fb-btn" onclick="showRelated()">🔄 See Related</button>
+  </div>`;
+
+  return html;
+}
+
+// ════════════════════════════════════════════════════════
+// CHAT MESSAGING
+// ════════════════════════════════════════════════════════
+function addBotMessage(htmlContent) {
+  const msgs = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = 'msg bot';
+  div.innerHTML = `
+    <div class="msg-avatar">🤖</div>
+    <div class="msg-bubble">${htmlContent}</div>
+  `;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function addUserMessage(text) {
+  const msgs = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = 'msg user';
+  div.innerHTML = `
+    <div class="msg-avatar">👤</div>
+    <div class="msg-bubble">${escHtml(text)}</div>
+  `;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function addTyping() {
+  const msgs = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = 'msg bot';
+  div.id = 'typingMsg';
+  div.innerHTML = `
+    <div class="msg-avatar">🤖</div>
+    <div class="msg-bubble">
+      <div class="typing-indicator">
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+      </div>
+    </div>
+  `;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function removeTyping() {
+  const el = document.getElementById('typingMsg');
+  if (el) el.remove();
+}
+
+function escHtml(t) {
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ════════════════════════════════════════════════════════
+// SEND MESSAGE (SEARCH)
+// ════════════════════════════════════════════════════════
+function sendMessage() {
+  const input = document.getElementById('userInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+
+  // If not in chat screen, switch to it
+  showChat();
+  document.getElementById('chatHeaderIcon').textContent = '🔍';
+  document.getElementById('chatHeaderTitle').textContent = 'Search Results';
+  document.getElementById('chatHeaderSub').textContent = 'Sevak found these matches';
+
+  addUserMessage(text);
+  addTyping();
+
+  setTimeout(() => {
+    removeTyping();
+    const lq = text.toLowerCase();
+    const matches = allProblems.filter(p =>
+      p.title.toLowerCase().includes(lq) ||
+      (p.tags || []).some(t => t.includes(lq)) ||
+      p.intro.toLowerCase().includes(lq)
+    );
+
+    if (matches.length === 0) {
+      addBotMessage(`
+        <div style="font-size:14px;">I couldn't find an exact match for "<b>${escHtml(text)}</b>".</div>
+        <div style="font-size:13px; color:var(--text-muted); margin-top:8px; line-height:1.6;">Try different keywords like "flat tyre", "fuel empty", "engine hot", "battery dead", or browse categories on the left.</div>
+        <div class="step-buttons" style="margin-top:12px;">
+          <button class="step-btn" onclick="openProblem('all_helplines')">📞 View all emergency helplines</button>
+          <button class="step-btn" onclick="showWelcome()">🏠 Browse all topics</button>
+        </div>
+      `);
+    } else if (matches.length === 1) {
+      openProblem(matches[0].id);
+    } else {
+      let html = `<div style="font-size:14px; margin-bottom:12px;">Found <b>${matches.length}</b> results for "<b>${escHtml(text)}</b>" — which one?</div>`;
+      html += `<div class="step-buttons">`;
+      matches.slice(0, 6).forEach(m => {
+        html += `<button class="step-btn" onclick="openProblem('${m.id}')">${m.icon} ${m.title}</button>`;
+      });
+      html += `</div>`;
+      addBotMessage(html);
+    }
+  }, 600);
+}
+
+// ════════════════════════════════════════════════════════
+// SHOW RELATED
+// ════════════════════════════════════════════════════════
+function showRelated() {
+  const sample = allProblems.filter(p => p.id !== 'all_helplines').sort(() => Math.random() - 0.5).slice(0, 4);
+  let html = `<div style="font-size:14px; margin-bottom:10px;">You might also need:</div><div class="step-buttons">`;
+  sample.forEach(p => {
+    html += `<button class="step-btn" onclick="openProblem('${p.id}')">${p.icon} ${p.title}</button>`;
+  });
+  html += `</div>`;
+  addBotMessage(html);
+}
+
+// ════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════
+renderSidebar();
+renderQuickGrid();
+
+// Greet
+setTimeout(() => {
+  const msgs = document.getElementById('messages');
+  if (msgs) {
+    addBotMessage(`
+      <div style="font-size:15px; font-weight:600; margin-bottom:6px;">👋 Namaste! I'm Sevak.</div>
+      <div style="font-size:13.5px; color:var(--text-secondary); line-height:1.6;">
+        I work <b>completely offline</b> and can help you with 55+ roadside problems — from a flat tyre to fuel emergency to brake failure.<br><br>
+        Pick a topic from the left, tap a quick card above, or just type your problem here.
+      </div>
+    `);
+  }
+}, 100);
+</script>
+</body>
+</html>

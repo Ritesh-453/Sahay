@@ -1,324 +1,877 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RoadAssist — My Requests</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<title>Sahay — My Requests</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <style>
-:root{--navy:#0f172a;--navy-mid:#1e293b;--red:#e63946;--red-dark:#c1121f;--grey-bg:#f4f6f9;--grey-text:#64748b;--border:#e2e8f0;--white:#ffffff;--success:#16a34a;--info:#0284c7}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',sans-serif;background:var(--grey-bg);min-height:100vh}
-.navbar{background:var(--navy);padding:0 20px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,.2)}
-.nav-brand{font-family:'Syne',sans-serif;font-size:20px;color:var(--white);letter-spacing:-.5px;display:flex;align-items:center;gap:10px}
-.brand-mark{width:32px;height:32px;background:var(--red);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:white;flex-shrink:0;font-family:'Syne',sans-serif}
-.nav-right{display:flex;align-items:center;gap:12px}
-.nav-user{font-size:13px;color:#94a3b8}
-.nav-user strong{color:var(--white)}
-.btn-logout{background:rgba(230,57,70,.15);color:var(--red);border:1px solid rgba(230,57,70,.3);padding:7px 14px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .2s}
-.btn-logout:hover{background:var(--red);color:white}
-.page{padding:20px;max-width:1300px;margin:0 auto}
-.sh{display:flex;align-items:center;gap:10px;margin-bottom:16px}
-.sh h2{font-family:'Syne',sans-serif;font-size:18px;color:var(--navy)}
-.sh .line{flex:1;height:1px;background:var(--border)}
-.top-grid{display:grid;grid-template-columns:1fr;gap:20px;margin-bottom:24px;max-width:600px}
-.card{background:var(--white);border-radius:12px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.06);border:1px solid var(--border)}
-.card-title{font-family:'Syne',sans-serif;font-size:15px;color:var(--navy);margin-bottom:16px}
-.fg{margin-bottom:13px}
-.fg label{display:block;font-size:11px;font-weight:600;color:var(--grey-text);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
-.fg input,.fg select,.fg textarea{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--navy);background:var(--grey-bg);outline:none;transition:border-color .2s}
-.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(230,57,70,.08);background:var(--white)}
-.fg input.valid{border-color:var(--success)}
-.fg input.invalid{border-color:var(--red)}
-.hint{font-size:11px;color:var(--grey-text);margin-top:3px}
-.ferr{font-size:11px;color:var(--red);margin-top:3px;display:none}
-.sw{position:relative}
-.sw select{appearance:none;-webkit-appearance:none;cursor:pointer}
-.sw::after{content:'▾';position:absolute;right:13px;top:50%;transform:translateY(-50%);color:var(--grey-text);pointer-events:none}
-#othersField{display:none;margin-top:8px}
-#othersField textarea{resize:vertical;min-height:65px}
-.loc-btn-wrap{margin-bottom:8px}
-.btn-loc{width:100%;padding:11px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;background:var(--grey-bg);color:var(--navy-mid);transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
-.btn-loc:hover{border-color:var(--red);color:var(--red);background:#fff0f1}
-.btn-loc.selected{border-color:var(--success);color:var(--success);background:#f0fdf4}
-#locDisplay{font-size:12px;color:var(--info);font-weight:500;min-height:18px;margin-bottom:10px}
-.img-upload-wrap{border:1.5px dashed var(--border);border-radius:8px;padding:14px;text-align:center;cursor:pointer;background:var(--grey-bg);transition:all .2s;position:relative}
-.img-upload-wrap:hover{border-color:var(--red);background:#fff0f1}
-.img-upload-icon{font-size:22px;margin-bottom:4px}
-.img-upload-label{font-size:12px;color:var(--grey-text);font-weight:500}
-.img-preview-wrap{margin-top:10px;display:none}
-.img-preview-wrap img{width:100%;max-height:160px;object-fit:cover;border-radius:8px;border:1px solid var(--border)}
-.img-remove{font-size:11px;color:var(--red);cursor:pointer;margin-top:4px;display:inline-block;font-weight:600}
-.btn-sub{width:100%;padding:12px;background:var(--red);color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .2s;margin-top:4px}
-.btn-sub:hover{background:var(--red-dark);transform:translateY(-1px)}
-.tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
-table{width:100%;min-width:800px;border-collapse:collapse}
-thead tr{background:var(--navy)}
-thead th{padding:11px 14px;text-align:left;font-size:11px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
-tbody tr{border-bottom:1px solid var(--border)}
-tbody tr:hover{background:#f8fafc}
-tbody td{padding:12px 14px;font-size:13px;color:var(--navy-mid);white-space:nowrap}
-.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
-.bp{background:#fef3c7;color:#92400e}.ba{background:#dbeafe;color:#1e40af}.bc{background:#dcfce7;color:#166534}
-.btn-det{background:transparent;color:var(--info);border:1px solid #bfdbfe;padding:5px 11px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
-.btn-del{background:transparent;color:var(--red);border:1px solid #fecaca;padding:5px 11px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-left:4px}
-.btn-del:hover{background:#fee2e2}
-.btn-review{background:transparent;color:#7c3aed;border:1px solid #ddd6fe;padding:5px 11px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-left:4px}
-.btn-review:hover{background:#ede9fe}
-.btn-view-review{background:transparent;color:#059669;border:1px solid #a7f3d0;padding:5px 11px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-left:4px}
-.ov{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(15,23,42,.65);z-index:999;justify-content:center;align-items:center;padding:16px;backdrop-filter:blur(2px)}
-.ov.show{display:flex}
-.loc-popup{background:white;border-radius:16px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden}
-.loc-popup-head{background:var(--navy);padding:18px 22px}
-.loc-popup-head h3{font-family:'Syne',sans-serif;font-size:16px;color:white}
-.loc-popup-head p{font-size:12px;color:#94a3b8;margin-top:4px}
-.loc-popup-body{padding:20px;display:flex;flex-direction:column;gap:12px}
-.loc-option{display:flex;align-items:center;gap:14px;padding:14px 16px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;transition:all .2s;background:var(--grey-bg)}
-.loc-option:hover{border-color:var(--red);background:#fff0f1}
-.loc-option-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
-.loc-option-icon.live{background:#dbeafe}
-.loc-option-icon.map{background:#dcfce7}
-.loc-option-text strong{display:block;font-size:14px;color:var(--navy);font-weight:600;margin-bottom:2px}
-.loc-option-text span{font-size:12px;color:var(--grey-text)}
-.loc-cancel{text-align:center;padding:0 20px 16px}
-.loc-cancel a{font-size:13px;color:var(--grey-text);cursor:pointer;text-decoration:underline}
-.map-popup{background:white;border-radius:16px;width:100%;max-width:560px;max-height:90vh;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.25);display:flex;flex-direction:column}
-.map-popup-head{background:var(--navy);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-.map-popup-head h3{font-family:'Syne',sans-serif;font-size:16px;color:white}
-.map-popup-head p{font-size:11px;color:#94a3b8;margin-top:2px}
-.btn-x{background:rgba(255,255,255,.1);border:none;color:white;width:28px;height:28px;border-radius:6px;cursor:pointer;font-size:14px;flex-shrink:0}
-#popupMap{flex:1;min-height:340px}
-.map-popup-foot{padding:14px 16px;display:flex;gap:10px;background:white;flex-shrink:0;border-top:1px solid var(--border)}
-.btn-confirm-loc{flex:2;padding:11px;background:var(--red);color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .2s}
-.btn-confirm-loc:hover{background:var(--red-dark)}
-.btn-confirm-loc:disabled{background:#94a3b8;cursor:not-allowed}
-.btn-cancel-loc{flex:1;padding:11px;background:var(--grey-bg);color:var(--navy-mid);border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
-.mech-pop{background:white;border-radius:16px;width:100%;max-width:460px;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25)}
-.pop-head{background:var(--navy);padding:18px 22px;border-radius:16px 16px 0 0;display:flex;align-items:center;justify-content:space-between}
-.pop-head h3{font-family:'Syne',sans-serif;font-size:16px;color:white}
-.pop-body{padding:20px}
-.ir{display:flex;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--border);gap:12px}
-.ir:last-of-type{border-bottom:none}
-.ii{width:32px;height:32px;background:var(--navy);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#94a3b8;flex-shrink:0}
-.il{font-size:10px;font-weight:600;color:var(--grey-text);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
-.iv{font-size:13px;color:var(--navy);font-weight:500}
-#dMap{height:180px;border-radius:8px;margin-top:14px;border:1px solid var(--border)}
-.succ-pop{background:white;border-radius:16px;padding:36px 30px;text-align:center;max-width:340px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25)}
-.s-icon{width:60px;height:60px;background:#dcfce7;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;color:var(--success);margin:0 auto 18px}
-.succ-pop h3{font-family:'Syne',sans-serif;font-size:20px;color:var(--navy);margin-bottom:8px}
-.succ-pop p{font-size:13px;color:var(--grey-text);margin-bottom:20px;line-height:1.6}
-.btn-ok{width:100%;padding:11px;background:var(--navy);color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
-.review-pop{background:white;border-radius:16px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden}
-.review-pop .pop-head{background:linear-gradient(135deg,#4c1d95,#7c3aed)}
-.stars-wrap{display:flex;justify-content:center;gap:10px;margin:18px 0 10px}
-.star{font-size:34px;cursor:pointer;color:#e2e8f0;transition:color .15s;user-select:none}
-.star.on{color:#f59e0b}
-.star:hover{color:#fbbf24}
-.review-comment{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--navy);background:var(--grey-bg);outline:none;resize:vertical;min-height:80px;transition:border-color .2s}
-.review-comment:focus{border-color:#7c3aed;background:white}
-.btn-submit-review{width:100%;padding:12px;background:#7c3aed;color:white;border:none;border-radius:8px;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:background .2s;margin-top:12px}
-.btn-submit-review:hover{background:#6d28d9}
-.view-review-pop{background:white;border-radius:16px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden;text-align:center;padding-bottom:24px}
-.view-review-pop .pop-head{background:linear-gradient(135deg,#065f46,#059669);margin-bottom:0}
-.review-stars-display{font-size:28px;margin:18px 0 8px;letter-spacing:4px}
-.review-comment-display{font-size:13px;color:var(--grey-text);padding:0 24px;line-height:1.6;font-style:italic}
-.btn-close-review{margin-top:16px;padding:9px 26px;background:var(--navy);color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
-.del-pop{background:white;border-radius:16px;padding:30px 28px;text-align:center;max-width:340px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25)}
-.del-icon{width:56px;height:56px;background:#fee2e2;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 14px}
-.del-pop h3{font-family:'Syne',sans-serif;font-size:18px;color:var(--navy);margin-bottom:8px}
-.del-pop p{font-size:13px;color:var(--grey-text);margin-bottom:20px;line-height:1.6}
-.del-actions{display:flex;gap:10px}
-.btn-del-cancel{flex:1;padding:11px;background:var(--grey-bg);color:var(--navy-mid);border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
-.btn-del-confirm{flex:1;padding:11px;background:var(--red);color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
-@media(max-width:768px){.page{padding:14px}.top-grid{grid-template-columns:1fr}.nav-user{display:none}.sh h2{font-size:16px}}
-@media(max-width:480px){.navbar{padding:0 14px}.nav-brand{font-size:17px}}
+:root {
+    --bg-void: #06070f;
+    --bg-deep: #0a0c1a;
+    --bg-dark: #0a0c1a;
+    --bg-card: #0f1120;
+    --bg-surface: #141729;
+    --bg-raised: #1a1f35;
+
+    --stripe-purple: #635bff;
+    --stripe-purple-bright: #7c74ff;
+    --stripe-violet: #7c3aed;
+    --stripe-glow: rgba(99,91,255,0.18);
+
+    --primary: #635bff;
+    --primary-hover: #7c74ff;
+    --primary-light: rgba(99,91,255,0.15);
+
+    --text-main: #eef0ff;
+    --text-secondary: #a8b0d8;
+    --text-muted: #5a6080;
+    --border: rgba(255,255,255,0.08);
+    --border-accent: rgba(99,91,255,0.4);
+
+    --success: #10b981;
+    --error: #f43f5e;
+    --warning: #f59e0b;
+    --info: #06b6d4;
+
+    --font: 'Sora', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: var(--font-body);
+    background: var(--bg-void);
+    color: var(--text-main);
+    min-height: 100vh;
+}
+
+/* Navbar */
+.navbar {
+    background: rgba(6,7,15,0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 0 32px;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 1px solid var(--border);
+}
+
+.nav-brand {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    letter-spacing: -0.5px;
+}
+
+.brand-mark { width:44px; height:44px; display:flex; align-items:center; }
+
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.nav-user {
+    font-size: 14px;
+    color: var(--text-muted);
+}
+.nav-user strong { color: var(--text-main); font-weight: 600; }
+
+.btn-logout {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--font);
+    transition: all 0.2s;
+}
+.btn-logout:hover {
+    background: rgba(244,63,94,0.08);
+    border-color: rgba(244,63,94,0.3);
+    color: var(--error);
+}
+
+/* Page Layout */
+.page { padding: 32px; max-width: 1400px; margin: 0 auto; }
+
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.section-header h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-main);
+    letter-spacing: -0.5px;
+}
+
+.section-header .line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, var(--border), transparent);
+}
+
+.top-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+    margin-bottom: 40px;
+    max-width: 650px;
+}
+
+.card {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 30px rgba(0,0,0,0.3);
+}
+
+.card-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 24px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+/* Form Styles */
+.fg { margin-bottom: 20px; position: relative; }
+.fg label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.fg input, .fg select, .fg textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-family: var(--font-body);
+    color: var(--text-main);
+    background: var(--bg-void);
+    outline: none;
+    transition: all 0.2s;
+}
+
+.fg input:focus, .fg select:focus, .fg textarea:focus {
+    border-color: var(--stripe-purple);
+    box-shadow: 0 0 0 3px rgba(99,91,255,0.12);
+}
+
+.fg input.valid { border-color: var(--success); }
+.fg input.invalid { border-color: var(--error); }
+
+.hint { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+.ferr { font-size: 12px; color: var(--error); margin-top: 6px; display: none; }
+
+.sw { position: relative; }
+.sw select { appearance: none; -webkit-appearance: none; cursor: pointer; }
+.sw::after {
+    content: '▾';
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    pointer-events: none;
+}
+
+#othersField { display: none; margin-top: 12px; }
+#othersField textarea { resize: vertical; min-height: 80px; }
+
+/* Location Button */
+.loc-btn-wrap { margin-bottom: 12px; }
+.btn-loc {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: var(--font);
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.02);
+    color: var(--text-muted);
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.btn-loc:hover {
+    border-color: var(--stripe-purple);
+    color: var(--stripe-purple-bright);
+    background: var(--primary-light);
+}
+
+.btn-loc.selected {
+    border: 1px solid var(--success);
+    color: var(--success);
+    background: rgba(16, 185, 129, 0.1);
+}
+
+#locDisplay {
+    font-size: 13px;
+    color: var(--info);
+    font-weight: 500;
+    min-height: 20px;
+}
+
+/* Image Upload */
+.img-upload-wrap {
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.02);
+    transition: all 0.2s;
+    position: relative;
+}
+.img-upload-wrap:hover {
+    border-color: var(--primary);
+    background: var(--primary-light);
+}
+.img-upload-icon { font-size: 24px; margin-bottom: 8px; opacity: 0.8; }
+.img-upload-label { font-size: 13px; color: var(--text-muted); font-weight: 500; }
+
+.img-preview-wrap { margin-top: 12px; display: none; position: relative; }
+.img-preview-wrap img {
+    width: 100%;
+    max-height: 200px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+}
+.img-remove {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(15, 23, 42, 0.8);
+    color: var(--error);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    transition: background 0.2s;
+}
+.img-remove:hover { background: var(--bg-dark); }
+
+/* Submit Button */
+.btn-sub {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--stripe-purple), var(--stripe-violet));
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 15px;
+    font-weight: 600;
+    font-family: var(--font);
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 8px;
+    box-shadow: 0 4px 16px rgba(99,91,255,0.3);
+}
+.btn-sub:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(99,91,255,0.45);
+}
+
+/* Table Styles */
+.tw { overflow-x: auto; }
+table { width: 100%; min-width: 900px; border-collapse: separate; border-spacing: 0; }
+thead th {
+    padding: 14px 16px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-dark);
+}
+tbody tr { transition: background 0.2s; }
+tbody tr:hover { background: rgba(99,91,255,0.04); }
+tbody td {
+    padding: 16px;
+    font-size: 14px;
+    color: var(--text-main);
+    white-space: nowrap;
+    border-bottom: 1px solid var(--border);
+}
+tbody tr:last-child td { border-bottom: none; }
+
+/* Badges */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+.bp { background: rgba(245, 158, 11, 0.1); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.2); }
+.ba { background: rgba(59, 130, 246, 0.1); color: var(--info); border: 1px solid rgba(59, 130, 246, 0.2); }
+.bc { background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.2); }
+
+.badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+.bp::before { background: var(--warning); animation: pulse-dot 1.5s infinite; }
+.ba::before { background: var(--info); }
+.bc::before { background: var(--success); }
+
+@keyframes pulse-dot {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+}
+
+/* Action Buttons */
+.btn-action {
+    background: transparent;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--font);
+    transition: all 0.2s;
+    margin-right: 6px;
+}
+
+.btn-det { color: var(--stripe-purple-bright); border: 1px solid rgba(99,91,255,0.3); }
+.btn-det:hover { background: rgba(99,91,255,0.1); }
+
+.btn-del { color: var(--error); border: 1px solid rgba(244,63,94,0.3); }
+.btn-del:hover { background: rgba(244,63,94,0.08); }
+
+.btn-review { color: #a855f7; border: 1px solid rgba(168, 85, 247, 0.3); }
+.btn-review:hover { background: rgba(168, 85, 247, 0.1); }
+
+.btn-view-review { color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3); }
+.btn-view-review:hover { background: rgba(16, 185, 129, 0.1); }
+
+/* Modals */
+.ov {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(6,7,15,0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 999;
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+}
+.ov.show { display: flex; animation: fadeIn 0.2s ease; }
+
+.modal-base {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 24px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(99,91,255,0.1);
+    width: 100%;
+    overflow: hidden;
+}
+
+.loc-popup { max-width: 400px; }
+.map-popup { max-width: 600px; max-height: 90vh; display: flex; flex-direction: column; }
+.mech-pop { max-width: 460px; max-height: 90vh; overflow-y: auto; }
+.succ-pop, .del-pop { max-width: 360px; text-align: center; padding: 40px 30px; }
+.review-pop, .view-review-pop { max-width: 400px; }
+
+.modal-head {
+    background: var(--bg-dark);
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+}
+.modal-head h3 { font-size: 16px; font-weight: 700; color: var(--text-main); }
+.modal-head p { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+.btn-x {
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    color: var(--text-muted);
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.2s;
+}
+.btn-x:hover { background: rgba(255, 255, 255, 0.1); color: var(--text-main); }
+
+.modal-body { padding: 24px; }
+
+/* Location Options */
+.loc-option {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--bg-void);
+    margin-bottom: 12px;
+}
+.loc-option:hover {
+    border-color: var(--stripe-purple);
+    background: var(--primary-light);
+}
+.loc-option-icon {
+    width: 48px; height: 48px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+}
+.loc-option-icon.live { background: rgba(59, 130, 246, 0.15); color: var(--info); }
+.loc-option-icon.map { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+.loc-option-text strong { display: block; font-size: 15px; color: var(--text-main); margin-bottom: 4px; }
+.loc-option-text span { font-size: 13px; color: var(--text-muted); }
+
+.loc-cancel { text-align: center; padding-top: 8px; }
+.loc-cancel a { font-size: 14px; color: var(--text-muted); cursor: pointer; text-decoration: underline; }
+.loc-cancel a:hover { color: var(--text-main); }
+
+/* Map */
+#popupMap { flex: 1; min-height: 400px; }
+.map-popup-foot {
+    padding: 16px 20px;
+    display: flex;
+    gap: 12px;
+    background: var(--bg-card);
+    border-top: 1px solid var(--border);
+}
+.btn-confirm-loc {
+    flex: 2; padding: 12px;
+    background: linear-gradient(135deg, var(--stripe-purple), var(--stripe-violet)); color: white;
+    border: none; border-radius: var(--radius-sm);
+    font-size: 14px; font-weight: 600; cursor: pointer; font-family: var(--font);
+    box-shadow: 0 4px 16px rgba(99,91,255,0.3); transition: all 0.2s;
+}
+.btn-confirm-loc:disabled { background: rgba(255,255,255,0.06); color: var(--text-muted); cursor: not-allowed; box-shadow: none; }
+.btn-cancel-loc {
+    flex: 1; padding: 12px;
+    background: transparent; color: var(--text-main);
+    border: 1px solid var(--border); border-radius: 8px;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+}
+
+/* Mechanic Details */
+.ir {
+    display: flex; align-items: flex-start;
+    padding: 12px 0; border-bottom: 1px solid var(--border); gap: 16px;
+}
+.ir:last-of-type { border-bottom: none; }
+.ii {
+    width: 36px; height: 36px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700; color: var(--text-muted); flex-shrink: 0;
+}
+.il { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+.iv { font-size: 15px; color: var(--text-main); font-weight: 500; }
+#dMap { height: 200px; border-radius: 10px; margin-top: 20px; border: 1px solid var(--border); }
+
+/* Success & Delete Modals */
+.s-icon {
+    width: 70px; height: 70px;
+    background: rgba(16, 185, 129, 0.1);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px; color: var(--success); margin: 0 auto 24px;
+}
+.succ-pop h3, .del-pop h3 { font-size: 22px; color: var(--text-main); margin-bottom: 12px; }
+.succ-pop p, .del-pop p { font-size: 14px; color: var(--text-muted); margin-bottom: 28px; line-height: 1.6; }
+.btn-ok {
+    width: 100%; padding: 12px;
+    background: linear-gradient(135deg, var(--stripe-purple), var(--stripe-violet)); color: white;
+    border: none; border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; cursor: pointer;
+    font-family: var(--font); box-shadow: 0 4px 16px rgba(99,91,255,0.3);
+}
+
+.del-icon {
+    width: 70px; height: 70px;
+    background: rgba(244,63,94,0.08);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px; color: var(--error); margin: 0 auto 24px;
+}
+.del-actions { display: flex; gap: 12px; }
+.btn-del-cancel { flex: 1; padding: 12px; background: transparent; color: var(--text-main); border: 1px solid var(--border); border-radius: var(--radius-sm); font-weight: 600; cursor: pointer; }
+.btn-del-confirm { flex: 1; padding: 12px; background: var(--error); color: white; border: none; border-radius: var(--radius-sm); font-weight: 600; cursor: pointer; }
+
+/* Reviews */
+.review-pop .modal-head { background: linear-gradient(135deg, var(--stripe-purple), var(--stripe-violet)); border-bottom: none; }
+.review-pop .modal-head h3 { color: white; }
+.review-pop .btn-x { color: rgba(255,255,255,0.8); }
+.stars-wrap { display: flex; justify-content: center; gap: 12px; margin: 20px 0 12px; }
+.star { font-size: 40px; cursor: pointer; color: rgba(255,255,255,0.1); transition: color 0.2s; user-select: none; }
+.star.on { color: var(--warning); }
+.star:hover { color: #fbbf24; }
+.review-comment {
+    width: 100%; padding: 12px 16px;
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    font-size: 14px; font-family: var(--font-body); color: var(--text-main); background: var(--bg-void);
+    outline: none; resize: vertical; min-height: 100px; transition: all 0.2s;
+}
+.review-comment:focus { border-color: var(--stripe-purple); box-shadow: 0 0 0 3px rgba(99,91,255,0.12); }
+.btn-submit-review {
+    width: 100%; padding: 14px;
+    background: linear-gradient(135deg, var(--stripe-purple), var(--stripe-violet)); color: white;
+    border: none; border-radius: var(--radius-sm); font-size: 15px; font-weight: 600; cursor: pointer;
+    font-family: var(--font); box-shadow: 0 4px 16px rgba(99,91,255,0.3); transition: all 0.2s; margin-top: 16px;
+}
+.btn-submit-review:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(99,91,255,0.45); }
+
+.view-review-pop { text-align: center; padding-bottom: 30px; }
+.view-review-pop .modal-head { background: linear-gradient(135deg, #065f46, var(--success)); }
+.view-review-pop .modal-head h3 { color: white; }
+.view-review-pop .btn-x { color: rgba(255,255,255,0.8); }
+.review-stars-display { font-size: 32px; margin: 24px 0 8px; letter-spacing: 4px; color: var(--warning); }
+.review-comment-display { font-size: 14px; color: var(--text-muted); padding: 0 30px; line-height: 1.6; font-style: italic; }
+.btn-close-review { margin-top: 24px; padding: 10px 30px; background: rgba(255,255,255,0.06); color: var(--text-secondary); border: 1px solid var(--border); border-radius: var(--radius-sm); font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.btn-close-review:hover { background: rgba(99,91,255,0.15); border-color: var(--border-accent); color: var(--text-main); }
+
+@media(max-width: 768px) {
+    .page { padding: 20px; }
+    .navbar { padding: 0 20px; }
+    .nav-user { display: none; }
+    .card { padding: 20px; }
+}
 </style>
 </head>
 <body>
+
 <nav class="navbar">
-  <div class="nav-brand"><div class="brand-mark">RA</div>RoadAssist</div>
-  <div class="nav-right">
-    <span class="nav-user">Logged in as <strong id="user"></strong></span>
-    <button class="btn-logout" onclick="logout()">Sign Out</button>
-  </div>
+    <div class="nav-brand">
+        <img src="data:image/png;base64,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" class="brand-logo-img" style="width:40px;height:40px;object-fit:contain;">
+        Sahay
+    </div>
+    <div class="nav-right">
+        <span class="nav-user">Logged in as <strong id="user"></strong></span>
+        <a href="sevak.html" style="
+            display:inline-flex; align-items:center; gap:7px;
+            background:linear-gradient(135deg,#635bff,#7c3aed);
+            color:#fff; border:none; padding:8px 16px;
+            border-radius:8px; font-size:13px; font-weight:600;
+            font-family:'DM Sans',sans-serif; cursor:pointer;
+            text-decoration:none; letter-spacing:0.2px;
+            box-shadow:0 2px 12px rgba(99,91,255,0.35);
+            transition:opacity 0.2s;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+            🤖 Sevak
+        </a>
+        <button class="btn-logout" onclick="logout()">Sign Out</button>
+    </div>
 </nav>
+
 <div class="page">
-  <div class="sh"><h2>Submit a Request</h2><div class="line"></div></div>
-  <div class="top-grid">
-    <div class="card">
-      <div class="card-title">Breakdown Details</div>
-      <div class="fg">
-        <label>Vehicle Number</label>
-        <input type="text" id="vehicle" placeholder="MH 12 AB 1234" maxlength="13" oninput="fmtVehicle(this)">
-        <div class="hint">Format: XX 00 XX 0000 — Indian number plate</div>
-        <div class="ferr" id="vErr">Invalid Indian vehicle number format.</div>
-      </div>
-      <div class="fg">
-        <label>Issue Type</label>
-        <div class="sw">
-          <select id="issueSel" onchange="handleIssue(this.value)">
-            <option value="">-- Select Issue --</option>
-            <option>Tyre Puncture</option>
-            <option>Engine Failure</option>
-            <option>Battery Dead / Car Won't Start</option>
-            <option>Fuel Empty</option>
-            <option>Engine Overheating</option>
-            <option>Brake Failure</option>
-            <option>Accident Damage</option>
-            <option>Electrical / Wiring Issue</option>
-            <option>Key Locked Inside</option>
-            <option>Chain / Belt Snapped</option>
-            <option value="Others">Others (Describe below)</option>
-          </select>
-        </div>
-        <div id="othersField">
-          <textarea id="othersText" placeholder="Describe your issue in detail..."></textarea>
-        </div>
-      </div>
-      <div class="fg">
-        <label>Phone Number</label>
-        <input type="tel" id="phone" placeholder="10-digit mobile number" maxlength="10" oninput="fmtPhone(this)">
-        <div class="hint">10-digit Indian mobile number only</div>
-        <div class="ferr" id="pErr">Must be exactly 10 digits, numbers only.</div>
-      </div>
-      <div class="fg">
-        <label>Your Location</label>
-        <div class="loc-btn-wrap">
-          <button class="btn-loc" id="locBtn" onclick="openLocPopup()">
-            <span id="locBtnIcon">📍</span>
-            <span id="locBtnText">Select Location</span>
-          </button>
-        </div>
-        <div id="locDisplay"></div>
-      </div>
-      <div class="fg">
-        <label>Vehicle Photo <span style="color:var(--grey-text);font-weight:400;text-transform:none;font-size:11px">(Optional)</span></label>
-        <div class="img-upload-wrap" onclick="document.getElementById('vehicleImg').click()">
-          <input type="file" id="vehicleImg" accept="image/*" onchange="handleImgUpload(this)" style="display:none">
-          <div class="img-upload-icon">📷</div>
-          <div class="img-upload-label">Click to upload a photo of vehicle condition</div>
-          <div class="hint" style="margin-top:4px">JPG, PNG — Max 2MB</div>
-        </div>
-        <div class="img-preview-wrap" id="imgPreviewWrap">
-          <img id="imgPreview" src="" alt="Vehicle photo">
-          <span class="img-remove" onclick="removeImg()">✕ Remove photo</span>
-        </div>
-      </div>
-      <button class="btn-sub" onclick="submitReq()">Submit Request</button>
+    <div class="section-header">
+        <h2>Submit a Request</h2>
+        <div class="line"></div>
     </div>
-  </div>
-  <div class="sh"><h2>Your Requests</h2><div class="line"></div></div>
-  <div class="card" style="padding:0;overflow:hidden">
-    <div class="tw">
-      <table id="tbl">
-        <thead><tr><th>#</th><th>Vehicle</th><th>Issue</th><th>Phone</th><th>Location</th><th>Status</th><th>Submitted (IST)</th><th>Actions</th></tr></thead>
-        <tbody></tbody>
-      </table>
+
+    <div class="top-grid">
+        <div class="card">
+            <div class="card-title">Breakdown Details</div>
+            
+            <div class="fg">
+                <label>Vehicle Number</label>
+                <input type="text" id="vehicle" placeholder="MH 12 AB 1234" maxlength="13" oninput="fmtVehicle(this)">
+                <div class="hint">Format: XX 00 XX 0000 — Indian number plate</div>
+                <div class="ferr" id="vErr">Invalid Indian vehicle number format.</div>
+            </div>
+            
+            <div class="fg">
+                <label>Issue Type</label>
+                <div class="sw">
+                    <select id="issueSel" onchange="handleIssue(this.value)">
+                        <option value="">-- Select Issue --</option>
+                        <option>Tyre Puncture</option>
+                        <option>Engine Failure</option>
+                        <option>Battery Dead / Car Won't Start</option>
+                        <option>Fuel Empty</option>
+                        <option>Engine Overheating</option>
+                        <option>Brake Failure</option>
+                        <option>Accident Damage</option>
+                        <option>Electrical / Wiring Issue</option>
+                        <option>Key Locked Inside</option>
+                        <option>Chain / Belt Snapped</option>
+                        <option value="Others">Others (Describe below)</option>
+                    </select>
+                </div>
+                <div id="othersField">
+                    <textarea id="othersText" placeholder="Describe your issue in detail..."></textarea>
+                </div>
+            </div>
+            
+            <div class="fg">
+                <label>Phone Number</label>
+                <input type="tel" id="phone" placeholder="10-digit mobile number" maxlength="10" oninput="fmtPhone(this)">
+                <div class="hint">10-digit Indian mobile number only</div>
+                <div class="ferr" id="pErr">Must be exactly 10 digits, numbers only.</div>
+            </div>
+            
+            <div class="fg">
+                <label>Your Location</label>
+                <div class="loc-btn-wrap">
+                    <button class="btn-loc" id="locBtn" onclick="openLocPopup()">
+                        <span id="locBtnIcon">📍</span>
+                        <span id="locBtnText">Select Location</span>
+                    </button>
+                </div>
+                <div id="locDisplay"></div>
+            </div>
+            
+            <div class="fg">
+                <label>Vehicle Photo <span style="color:var(--text-muted);font-weight:400;text-transform:none">(Optional)</span></label>
+                <div class="img-upload-wrap" onclick="document.getElementById('vehicleImg').click()">
+                    <input type="file" id="vehicleImg" accept="image/*" onchange="handleImgUpload(this)" style="display:none">
+                    <div class="img-upload-icon">📸</div>
+                    <div class="img-upload-label">Click to upload a photo of vehicle condition</div>
+                    <div class="hint" style="margin-top:8px">JPG, PNG — Max 2MB</div>
+                </div>
+                <div class="img-preview-wrap" id="imgPreviewWrap">
+                    <img id="imgPreview" src="" alt="Vehicle photo">
+                    <span class="img-remove" onclick="removeImg()">✕ Remove</span>
+                </div>
+            </div>
+            
+            <button class="btn-sub" onclick="submitReq()">Submit Request</button>
+        </div>
     </div>
-  </div>
+
+    <!-- Nearby Shops Map Section -->
+    <div class="section-header" style="margin-top:40px;">
+        <h2>🗺️ Nearby Shops Map</h2>
+        <div class="line"></div>
+    </div>
+
+    <div class="card" style="padding:20px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                <span id="offlineMapBadge" style="display:none; background:#e74c3c; color:#fff; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:700;">📴 OFFLINE MODE</span>
+                <span id="onlineMapBadge" style="background:#27ae60; color:#fff; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:700;">🟢 LIVE</span>
+                <span id="shopCountBadge" style="background:var(--accent,#ff6600); color:#fff; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:700;">0 shops</span>
+            </div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <button onclick="locateMe()" style="background:#3498db; color:#fff; border:none; padding:8px 18px; border-radius:8px; cursor:pointer; font-weight:600;">📍 My Location</button>
+                <button onclick="refreshShops()" style="background:#27ae60; color:#fff; border:none; padding:8px 18px; border-radius:8px; cursor:pointer; font-weight:600;">🔄 Refresh Shops</button>
+            </div>
+        </div>
+
+        <!-- Map Container -->
+        <div id="shopMap" style="width:100%; height:480px; border-radius:12px; border:2px solid rgba(255,255,255,0.1); z-index:1;"></div>
+
+        <!-- Shop List Cards -->
+        <div id="shopListCards" style="margin-top:20px; display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px;"></div>
+    </div>
+
+    <div class="section-header" style="margin-top:40px;">
+        <h2>Your Requests</h2>
+        <div class="line"></div>
+    </div>
+    
+    <div class="card" style="padding:0; overflow:hidden">
+        <div class="tw">
+            <table id="tbl">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Vehicle</th>
+                        <th>Issue</th>
+                        <th>Phone</th>
+                        <th>Location</th>
+                        <th>Status</th>
+                        <th>Submitted (IST)</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
 </div>
+
 <!-- Location choice popup -->
 <div class="ov" id="locChoiceOv">
-  <div class="loc-popup">
-    <div class="loc-popup-head"><h3>Select Your Location</h3><p>Choose how you want to share your location</p></div>
-    <div class="loc-popup-body">
-      <div class="loc-option" onclick="useLive()">
-        <div class="loc-option-icon live">📡</div>
-        <div class="loc-option-text"><strong>Use Live Location</strong><span>Automatically detect your current position</span></div>
-      </div>
-      <div class="loc-option" onclick="openMapPopup()">
-        <div class="loc-option-icon map">🗺</div>
-        <div class="loc-option-text"><strong>Choose on Map</strong><span>Pin your location on the India map</span></div>
-      </div>
+    <div class="modal-base loc-popup">
+        <div class="modal-head">
+            <div>
+                <h3>Select Location</h3>
+                <p>Choose how to share your location</p>
+            </div>
+            <button class="btn-x" onclick="closeLocPopup()">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="loc-option" onclick="useLive()">
+                <div class="loc-option-icon live">📡</div>
+                <div class="loc-option-text">
+                    <strong>Use Live Location</strong>
+                    <span>Automatically detect your position</span>
+                </div>
+            </div>
+            <div class="loc-option" onclick="openMapPopup()">
+                <div class="loc-option-icon map">🗺️</div>
+                <div class="loc-option-text">
+                    <strong>Choose on Map</strong>
+                    <span>Pin your location manually</span>
+                </div>
+            </div>
+            <div class="loc-cancel"><a onclick="closeLocPopup()">Cancel</a></div>
+        </div>
     </div>
-    <div class="loc-cancel"><a onclick="closeLocPopup()">Cancel</a></div>
-  </div>
 </div>
+
 <!-- Map selection popup -->
 <div class="ov" id="mapSelOv">
-  <div class="map-popup">
-    <div class="map-popup-head">
-      <div><h3>Pin Your Location</h3><p>Tap anywhere on the map to select — India only</p></div>
-      <button class="btn-x" onclick="closeMapPopup()">&#x2715;</button>
+    <div class="modal-base map-popup">
+        <div class="modal-head">
+            <div>
+                <h3>Pin Location</h3>
+                <p>Tap anywhere on the map (India only)</p>
+            </div>
+            <button class="btn-x" onclick="closeMapPopup()">✕</button>
+        </div>
+        <div id="popupMap"></div>
+        <div class="map-popup-foot">
+            <button class="btn-cancel-loc" onclick="closeMapPopup()">Cancel</button>
+            <button class="btn-confirm-loc" id="confirmLocBtn" onclick="confirmMapLoc()" disabled>Confirm Location</button>
+        </div>
     </div>
-    <div id="popupMap"></div>
-    <div class="map-popup-foot">
-      <button class="btn-cancel-loc" onclick="closeMapPopup()">Cancel</button>
-      <button class="btn-confirm-loc" id="confirmLocBtn" onclick="confirmMapLoc()" disabled>Confirm Location</button>
-    </div>
-  </div>
 </div>
+
 <!-- Submit success -->
 <div class="ov" id="subOv">
-  <div class="succ-pop">
-    <div class="s-icon">&#10003;</div>
-    <h3>Request Submitted!</h3>
-    <p>Your breakdown request has been sent.<br>Our team will assign a mechanic shortly.</p>
-    <button class="btn-ok" onclick="document.getElementById('subOv').classList.remove('show')">Got it</button>
-  </div>
+    <div class="modal-base succ-pop">
+        <div class="s-icon">✓</div>
+        <h3>Request Submitted!</h3>
+        <p>Your breakdown request has been sent. We'll assign a mechanic shortly.</p>
+        <button class="btn-ok" onclick="document.getElementById('subOv').classList.remove('show')">Got it</button>
+    </div>
 </div>
+
 <!-- Mechanic details -->
 <div class="ov" id="mechOv">
-  <div class="mech-pop">
-    <div class="pop-head"><h3>Mechanic Details</h3><button class="btn-x" onclick="closeMech()">&#x2715;</button></div>
-    <div class="pop-body">
-      <div class="ir"><div class="ii">N</div><div><div class="il">Name</div><div class="iv" id="dN">-</div></div></div>
-      <div class="ir"><div class="ii">P</div><div><div class="il">Phone</div><div class="iv" id="dP">-</div></div></div>
-      <div class="ir"><div class="ii">T</div><div><div class="il">Estimated Arrival</div><div class="iv" id="dT">-</div></div></div>
-      <div class="ir"><div class="ii">L</div><div><div class="il">Location</div><div class="iv" id="dL">-</div></div></div>
-      <div id="dMap"></div>
-      <p id="noMap" style="display:none;text-align:center;padding:14px;font-size:13px;color:#94a3b8">Location not shared.</p>
+    <div class="modal-base mech-pop">
+        <div class="modal-head">
+            <h3>Mechanic Details</h3>
+            <button class="btn-x" onclick="closeMech()">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="ir"><div class="ii">👤</div><div><div class="il">Name</div><div class="iv" id="dN">-</div></div></div>
+            <div class="ir"><div class="ii">📞</div><div><div class="il">Phone</div><div class="iv" id="dP">-</div></div></div>
+            <div class="ir"><div class="ii">⏱️</div><div><div class="il">ETA</div><div class="iv" id="dT">-</div></div></div>
+            <div class="ir"><div class="ii">📍</div><div><div class="il">Location</div><div class="iv" id="dL">-</div></div></div>
+            <div id="dMap"></div>
+            <p id="noMap" style="display:none;text-align:center;padding:14px;font-size:13px;color:var(--text-muted)">Location not shared.</p>
+        </div>
     </div>
-  </div>
 </div>
+
 <!-- Review popup -->
 <div class="ov" id="reviewOv">
-  <div class="review-pop">
-    <div class="pop-head"><h3>Rate Your Experience</h3><button class="btn-x" onclick="closeReview()">&#x2715;</button></div>
-    <div class="pop-body">
-      <p style="font-size:13px;color:var(--grey-text);text-align:center;margin-bottom:4px">How was the service you received?</p>
-      <div class="stars-wrap" id="starsWrap">
-        <span class="star" onclick="setStars(1)">&#9733;</span>
-        <span class="star" onclick="setStars(2)">&#9733;</span>
-        <span class="star" onclick="setStars(3)">&#9733;</span>
-        <span class="star" onclick="setStars(4)">&#9733;</span>
-        <span class="star" onclick="setStars(5)">&#9733;</span>
-      </div>
-      <p id="starLabel" style="text-align:center;font-size:12px;color:#7c3aed;font-weight:600;margin-bottom:12px;min-height:16px"></p>
-      <div class="fg" style="margin-bottom:0">
-        <label>Your Comment</label>
-        <textarea class="review-comment" id="reviewComment" placeholder="Tell us about your experience..."></textarea>
-      </div>
-      <button class="btn-submit-review" onclick="submitReview()">Submit Review</button>
+    <div class="modal-base review-pop">
+        <div class="modal-head">
+            <h3>Rate Service</h3>
+            <button class="btn-x" onclick="closeReview()">✕</button>
+        </div>
+        <div class="modal-body">
+            <p style="font-size:14px;color:var(--text-muted);text-align:center;margin-bottom:8px">How was the service you received?</p>
+            <div class="stars-wrap" id="starsWrap">
+                <span class="star" onclick="setStars(1)">★</span>
+                <span class="star" onclick="setStars(2)">★</span>
+                <span class="star" onclick="setStars(3)">★</span>
+                <span class="star" onclick="setStars(4)">★</span>
+                <span class="star" onclick="setStars(5)">★</span>
+            </div>
+            <p id="starLabel" style="text-align:center;font-size:13px;color:#a855f7;font-weight:600;margin-bottom:20px;min-height:18px"></p>
+            
+            <div class="fg" style="margin-bottom:0">
+                <label style="color:var(--text-muted)">Comments</label>
+                <textarea class="review-comment" id="reviewComment" placeholder="Tell us about your experience..."></textarea>
+            </div>
+            <button class="btn-submit-review" onclick="submitReview()">Submit Review</button>
+        </div>
     </div>
-  </div>
 </div>
+
 <!-- View review popup -->
 <div class="ov" id="viewReviewOv">
-  <div class="view-review-pop">
-    <div class="pop-head"><h3>Your Review</h3><button class="btn-x" onclick="document.getElementById('viewReviewOv').classList.remove('show')">&#x2715;</button></div>
-    <div class="review-stars-display" id="vrStars"></div>
-    <p style="font-size:11px;color:var(--grey-text);margin-bottom:6px" id="vrRating"></p>
-    <p class="review-comment-display" id="vrComment"></p>
-    <button class="btn-close-review" onclick="document.getElementById('viewReviewOv').classList.remove('show')">Close</button>
-  </div>
+    <div class="modal-base view-review-pop">
+        <div class="modal-head">
+            <h3>Your Review</h3>
+            <button class="btn-x" onclick="document.getElementById('viewReviewOv').classList.remove('show')">✕</button>
+        </div>
+        <div class="review-stars-display" id="vrStars"></div>
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px" id="vrRating"></p>
+        <p class="review-comment-display" id="vrComment"></p>
+        <button class="btn-close-review" onclick="document.getElementById('viewReviewOv').classList.remove('show')">Close</button>
+    </div>
 </div>
+
 <!-- Delete confirm popup -->
 <div class="ov" id="delOv">
-  <div class="del-pop">
-    <div class="del-icon">&#128465;</div>
-    <h3>Delete Request?</h3>
-    <p>This will permanently delete your request. This action cannot be undone.</p>
-    <div class="del-actions">
-      <button class="btn-del-cancel" onclick="document.getElementById('delOv').classList.remove('show')">Cancel</button>
-      <button class="btn-del-confirm" onclick="confirmDelete()">Yes, Delete</button>
+    <div class="modal-base del-pop">
+        <div class="del-icon">🗑️</div>
+        <h3>Delete Request?</h3>
+        <p>This will permanently remove your request. This action cannot be undone.</p>
+        <div class="del-actions">
+            <button class="btn-del-cancel" onclick="document.getElementById('delOv').classList.remove('show')">Cancel</button>
+            <button class="btn-del-confirm" onclick="confirmDelete()">Delete</button>
+        </div>
     </div>
-  </div>
 </div>
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
-const API = "https://roadassist.onrender.com";
+const API = "http://localhost:8082";
 const uname = localStorage.getItem("username");
 const role = localStorage.getItem("role");
 if (!uname || role !== "CUSTOMER") { alert("Access denied!"); window.location.href = "index.html"; }
@@ -363,15 +916,15 @@ function closeLocPopup() { document.getElementById('locChoiceOv').classList.remo
 function useLive() {
   closeLocPopup();
   const d = document.getElementById("locDisplay");
-  d.innerText = "Getting your location..."; d.style.color = "#0284c7";
+  d.innerText = "Getting location..."; d.style.color = "var(--info)";
   if (!navigator.geolocation) { alert("Geolocation not supported by your browser."); return; }
   navigator.geolocation.getCurrentPosition(pos => {
     const la = pos.coords.latitude, ln = pos.coords.longitude;
     if (la < 6.5 || la > 35.5 || ln < 68.1 || ln > 97.4) {
-      d.innerText = "Your live location is outside India. Please choose on map."; d.style.color = "#e63946"; return;
+      d.innerText = "Location outside India. Please choose on map."; d.style.color = "var(--error)"; return;
     }
     setConfirmedLoc(la, ln);
-  }, () => { d.innerText = "Could not get location. Please choose on map."; d.style.color = "#e63946"; });
+  }, () => { d.innerText = "Could not get location. Please choose on map."; d.style.color = "var(--error)"; });
 }
 
 function openMapPopup() {
@@ -383,17 +936,20 @@ function openMapPopup() {
     if (popupMapInst) { popupMapInst.remove(); popupMapInst = null; popupMkr = null; }
     const IND = { minLat: 6.5, maxLat: 35.5, minLng: 68.1, maxLng: 97.4 };
     const indiaBounds = [[IND.minLat, IND.minLng], [IND.maxLat, IND.maxLng]];
+    
+    // Dark mode map tiles
     popupMapInst = L.map('popupMap', { minZoom: 4, maxBounds: indiaBounds, maxBoundsViscosity: 1.0 }).setView([20.5937, 78.9629], 5);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(popupMapInst);
-    L.rectangle(indiaBounds, { color: '#e63946', weight: 2, fill: false, dashArray: '6,4' }).addTo(popupMapInst);
-    const outer = [[90,-180],[-90,-180],[-90,180],[90,180]];
-    const hole = [[IND.minLat,IND.minLng],[IND.maxLat,IND.minLng],[IND.maxLat,IND.maxLng],[IND.minLat,IND.maxLng]];
-    L.polygon([outer, hole], { color:'none', fillColor:'#0f172a', fillOpacity:0.35, stroke:false }).addTo(popupMapInst);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { 
+        attribution: '&copy; OpenStreetMap contributors &copy; CARTO' 
+    }).addTo(popupMapInst);
+    
+    L.rectangle(indiaBounds, { color: '#6366f1', weight: 2, fill: false, dashArray: '6,4' }).addTo(popupMapInst);
+    
     popupMapInst.on('click', e => {
       const la = e.latlng.lat, ln = e.latlng.lng;
       if (la < IND.minLat || la > IND.maxLat || ln < IND.minLng || ln > IND.maxLng) {
         L.popup({ closeButton: false }).setLatLng(e.latlng)
-          .setContent('<div style="font-size:12px;font-weight:600;color:#e63946;padding:2px 4px">Please select a location within India</div>')
+          .setContent('<div style="font-size:12px;font-weight:600;color:#ef4444;padding:2px">Please select within India</div>')
           .openOn(popupMapInst);
         setTimeout(() => popupMapInst.closePopup(), 2000);
         return;
@@ -412,10 +968,10 @@ function confirmMapLoc() { if (!tempLat || !tempLng) return; setConfirmedLoc(tem
 function setConfirmedLoc(la, ln) {
   selLat = la; selLng = ln;
   document.getElementById('locBtn').classList.add('selected');
-  document.getElementById('locBtnIcon').innerText = '\u2713';
+  document.getElementById('locBtnIcon').innerText = '✓';
   document.getElementById('locBtnText').innerText = la.toFixed(4) + ', ' + ln.toFixed(4);
   const d = document.getElementById("locDisplay");
-  d.innerText = "Location set successfully."; d.style.color = "#16a34a";
+  d.innerText = "Location set successfully."; d.style.color = "var(--success)";
 }
 
 // ---- Form helpers ----
@@ -456,6 +1012,7 @@ function submitReq() {
   if (!selLat || !selLng) { alert("Please select your location first."); return; }
   const body = { customerName: uname, vehicleNumber: veh, issue, phone: ph, latitude: selLat, longitude: selLng };
   if (vehicleImgBase64) body.vehicleImage = vehicleImgBase64;
+  
   fetch(API + "/api/requests", {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body)
   })
@@ -484,30 +1041,42 @@ function fetchReqs() {
   .then(r => r.json())
   .then(data => {
     const tb = document.querySelector("#tbl tbody"); tb.innerHTML = "";
-    if (!data.length) { tb.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#94a3b8;padding:30px">No requests yet.</td></tr>'; return; }
-    data.sort((a, b) => a.id - b.id);
+    if (!data.length) { tb.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:40px">No requests found. Submit one above.</td></tr>'; return; }
+    data.sort((a, b) => b.id - a.id); // Show newest first
     data.forEach((req, idx) => {
-      const sc = req.status === "Pending" ? "bp" : req.status === "Accepted" ? "ba" : "bc";
-      const displayNo = idx + 1;
+      let sc = req.status === "Pending" ? "bp" : req.status === "Accepted" ? "ba" : "bc";
+      let statusText = req.status;
+      if (req.status === "Pending") {
+          if (!req.assignmentStage || req.assignmentStage === "OPEN") {
+              statusText = "Searching shops...";
+          } else if (req.assignmentStage === "ASSIGNED") {
+              statusText = "Finding nearest shop...";
+          } else if (req.assignmentStage === "BROADCAST") {
+              statusText = "Shop rejected, finding another...";
+          }
+      }
+      
       let actions = '';
       if ((req.status === "Accepted" || req.status === "Completed") && req.mechanicName)
-        actions += '<button class="btn-det" onclick=\'showMech(' + JSON.stringify(req).replace(/'/g,"&#39;") + ')\'>Details</button>';
+        actions += '<button class="btn-action btn-det" onclick=\'showMech(' + JSON.stringify(req).replace(/'/g,"&#39;") + ')\'>Details</button>';
       if (req.status === "Pending")
-        actions += '<button class="btn-del" onclick="askDelete(' + req.id + ')">Delete</button>';
+        actions += '<button class="btn-action btn-del" onclick="askDelete(' + req.id + ')">Delete</button>';
       if (req.status === "Completed" && !req.reviewRating)
-        actions += '<button class="btn-review" onclick="openReview(' + req.id + ')">&#9733; Review</button>';
+        actions += '<button class="btn-action btn-review" onclick="openReview(' + req.id + ')">★ Review</button>';
       if (req.status === "Completed" && req.reviewRating)
-        actions += '<button class="btn-view-review" onclick=\'viewReview(' + req.reviewRating + ',decodeURIComponent("' + encodeURIComponent(req.reviewComment || '') + '"))\'>View Review</button>';
-      if (!actions) actions = '<span style="color:#cbd5e1">—</span>';
+        actions += '<button class="btn-action btn-view-review" onclick=\'viewReview(' + req.reviewRating + ',decodeURIComponent("' + encodeURIComponent(req.reviewComment || '') + '"))\'>View Review</button>';
+      if (!actions) actions = '<span style="color:var(--text-muted)">—</span>';
+      
       const ist = formatIST(req.createdAt);
+      
       tb.innerHTML += '<tr>'
-        + '<td style="color:#94a3b8;font-size:12px">#' + displayNo + '</td>'
-        + '<td><strong>' + req.vehicleNumber + '</strong></td>'
+        + '<td style="color:var(--text-muted);font-size:13px">#' + req.id + '</td>'
+        + '<td style="font-weight:600">' + req.vehicleNumber + '</td>'
         + '<td>' + req.issue + '</td>'
         + '<td>' + (req.phone || 'N/A') + '</td>'
-        + '<td style="color:#94a3b8">' + (req.latitude ? req.latitude.toFixed(4) + ', ' + req.longitude.toFixed(4) : 'N/A') + '</td>'
-        + '<td><span class="badge ' + sc + '">' + req.status + '</span></td>'
-        + '<td style="color:#94a3b8">' + ist + '</td>'
+        + '<td style="color:var(--text-muted)">' + (req.latitude ? req.latitude.toFixed(4) + ', ' + req.longitude.toFixed(4) : 'N/A') + '</td>'
+        + '<td><span class="badge ' + sc + '">' + statusText + '</span></td>'
+        + '<td style="color:var(--text-muted)">' + ist + '</td>'
         + '<td>' + actions + '</td></tr>';
     });
   })
@@ -524,12 +1093,13 @@ function showMech(req) {
   document.getElementById("dMap").style.display = has ? "block" : "none";
   document.getElementById("noMap").style.display = has ? "none" : "block";
   document.getElementById("mechOv").classList.add("show");
+  
   setTimeout(() => {
     if (detailMapInst) { detailMapInst.remove(); detailMapInst = null; }
     if (has) {
       const la = parseFloat(req.mechanicLatitude), ln = parseFloat(req.mechanicLongitude);
       detailMapInst = L.map('dMap').setView([la, ln], 13);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(detailMapInst);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap' }).addTo(detailMapInst);
       L.marker([la, ln]).addTo(detailMapInst).bindPopup("Mechanic Location").openPopup();
     }
   }, 100);
@@ -578,7 +1148,7 @@ function submitReview() {
 
 function viewReview(rating, comment) {
   let stars = '';
-  for (let i = 1; i <= 5; i++) stars += i <= rating ? '\u2605' : '\u2606';
+  for (let i = 1; i <= 5; i++) stars += i <= rating ? '★' : '☆';
   document.getElementById("vrStars").innerText = stars;
   document.getElementById("vrRating").innerText = starLabels[rating] + " (" + rating + "/5)";
   document.getElementById("vrComment").innerText = comment || "No comment provided.";
@@ -597,6 +1167,259 @@ function formatIST(dtStr) {
   const hh = String(ist.getUTCHours()).padStart(2,'0');
   const min = String(ist.getUTCMinutes()).padStart(2,'0');
   return dd+'/'+mm+'/'+yyyy+', '+hh+':'+min;
+}
+</script>
+
+<script>
+/* ============================================================
+   OFFLINE SHOPS MAP
+   - Fetches shops from API when online, saves to localStorage
+   - Loads from localStorage when offline
+   - Shows all branches as map markers with shop info
+   ============================================================ */
+
+const SHOPS_CACHE_KEY = 'sahay_shops_cache';
+let shopMap = null;
+let shopMarkers = [];
+let userMarker = null;
+let allShopsData = [];
+
+// Initialise map on page load
+window.addEventListener('load', function() {
+  // Wait for Leaflet to be ready
+  function tryInit() {
+    if (typeof L === 'undefined') {
+      setTimeout(tryInit, 200);
+      return;
+    }
+    initShopMap();
+    setTimeout(() => {
+      loadShops();
+      updateNetworkBadge();
+    }, 600);
+  }
+  tryInit();
+  window.addEventListener('online',  updateNetworkBadge);
+  window.addEventListener('offline', updateNetworkBadge);
+});
+
+function updateNetworkBadge() {
+  const offline = document.getElementById('offlineMapBadge');
+  const online  = document.getElementById('onlineMapBadge');
+  if (navigator.onLine) {
+    offline.style.display = 'none';
+    online.style.display  = 'inline-block';
+  } else {
+    offline.style.display = 'inline-block';
+    online.style.display  = 'none';
+  }
+}
+
+function initShopMap() {
+  shopMap = L.map('shopMap', { preferCanvas: true }).setView([20.5937, 78.9629], 5);
+
+  // Primary tile layer (online)
+  const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    maxZoom: 19,
+    crossOrigin: true,
+  });
+
+  // Fallback: show grey tile with message when offline
+  osmLayer.on('tileerror', function(e) {
+    e.tile.src = 'data:image/svg+xml;base64,' + btoa(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256">' +
+      '<rect width="256" height="256" fill="#1a1a2e"/>' +
+      '<text x="128" y="128" text-anchor="middle" fill="#666" font-size="12" font-family="Arial">' +
+      'Offline - Cached tiles only</text></svg>'
+    );
+  });
+
+  osmLayer.addTo(shopMap);
+
+  // Fix Leaflet grey-area bug - force recalc multiple times
+  setTimeout(() => { shopMap.invalidateSize(true); }, 200);
+  setTimeout(() => { shopMap.invalidateSize(true); }, 600);
+  setTimeout(() => { shopMap.invalidateSize(true); }, 1200);
+}
+
+function loadShops() {
+  if (navigator.onLine) {
+    fetch(API + '/api/shop/all')
+      .then(r => r.json())
+      .then(shops => {
+        allShopsData = shops;
+        localStorage.setItem(SHOPS_CACHE_KEY, JSON.stringify(shops));
+        renderShopsOnMap(shops);
+        renderShopCards(shops);
+      })
+      .catch(() => {
+        // Online but fetch failed — try cache
+        loadFromCache();
+      });
+  } else {
+    loadFromCache();
+  }
+}
+
+function loadFromCache() {
+  const cached = localStorage.getItem(SHOPS_CACHE_KEY);
+  if (cached) {
+    const shops = JSON.parse(cached);
+    allShopsData = shops;
+    renderShopsOnMap(shops);
+    renderShopCards(shops);
+  } else {
+    document.getElementById('shopListCards').innerHTML =
+      '<p style="color:#aaa; text-align:center; grid-column:1/-1;">No shop data available offline. Please connect to internet once to load shops.</p>';
+  }
+}
+
+function refreshShops() {
+  // Clear old markers
+  shopMarkers.forEach(m => shopMap.removeLayer(m));
+  shopMarkers = [];
+  document.getElementById('shopListCards').innerHTML = '';
+  loadShops();
+}
+
+function renderShopsOnMap(shops) {
+  const bounds = [];
+  let totalBranches = 0;
+
+  shops.forEach(shop => {
+    let branches = [];
+    try { branches = JSON.parse(shop.branchesJson || '[]'); } catch(e) {}
+
+    branches.forEach(branch => {
+      if (!branch.lat || !branch.lng) return;
+      totalBranches++;
+
+      // Custom orange marker
+      const icon = L.divIcon({
+        className: '',
+        html: `<div style="
+          background:#ff6600;
+          width:34px; height:34px;
+          border-radius:50% 50% 50% 0;
+          transform:rotate(-45deg);
+          border:3px solid #fff;
+          box-shadow:0 2px 8px rgba(0,0,0,0.4);
+          display:flex; align-items:center; justify-content:center;">
+          <span style="transform:rotate(45deg); font-size:16px;">🔧</span>
+        </div>`,
+        iconSize: [34, 34],
+        iconAnchor: [17, 34],
+        popupAnchor: [0, -36]
+      });
+
+      const phoneLink = shop.phone
+        ? `<a href="tel:${shop.phone}" style="color:#ff6600; font-weight:700; font-size:15px; text-decoration:none;">📞 ${shop.phone}</a>`
+        : '<span style="color:#aaa;">No phone listed</span>';
+
+      const popup = `
+        <div style="font-family:Arial,sans-serif; min-width:200px; padding:4px;">
+          <div style="font-size:16px; font-weight:800; color:#1a1a2e; margin-bottom:6px;">🏪 ${branch.name || shop.username}</div>
+          <div style="font-size:13px; color:#555; margin-bottom:4px;">👤 <b>Owner:</b> ${shop.ownerName || 'N/A'}</div>
+          <div style="font-size:13px; color:#555; margin-bottom:6px;">📍 ${branch.address || 'No address'}</div>
+          <div style="margin-top:8px;">${phoneLink}</div>
+        </div>`;
+
+      const marker = L.marker([branch.lat, branch.lng], { icon })
+        .addTo(shopMap)
+        .bindPopup(popup, { maxWidth: 260 });
+
+      shopMarkers.push(marker);
+      bounds.push([branch.lat, branch.lng]);
+    });
+  });
+
+  // Update shop count badge
+  document.getElementById('shopCountBadge').textContent = totalBranches + ' shop' + (totalBranches !== 1 ? 's' : '');
+
+  // Fit map to all markers
+  if (bounds.length > 0) {
+    shopMap.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
+  }
+}
+
+function renderShopCards(shops) {
+  const container = document.getElementById('shopListCards');
+  container.innerHTML = '';
+
+  if (!shops || shops.length === 0) {
+    container.innerHTML = '<p style="color:#aaa; text-align:center; grid-column:1/-1;">No shops registered yet.</p>';
+    return;
+  }
+
+  shops.forEach(shop => {
+    let branches = [];
+    try { branches = JSON.parse(shop.branchesJson || '[]'); } catch(e) {}
+
+    const phoneHtml = shop.phone
+      ? `<a href="tel:${shop.phone}" style="color:#ff6600; font-weight:700; text-decoration:none; font-size:15px;">📞 ${shop.phone}</a>`
+      : '<span style="color:#888; font-size:13px;">No phone</span>';
+
+    const branchList = branches.length > 0
+      ? branches.map(b => `<div style="font-size:12px; color:#aaa; margin-top:3px;">📍 ${b.name || ''} — ${b.address || 'No address'}</div>`).join('')
+      : '<div style="font-size:12px; color:#aaa;">No branch info</div>';
+
+    const flyToBranch = branches.find(b => b.lat && b.lng);
+    const flyBtn = flyToBranch
+      ? `<button onclick="flyToShop(${flyToBranch.lat},${flyToBranch.lng})"
+           style="margin-top:10px; width:100%; background:#ff6600; color:#fff; border:none;
+                  padding:7px; border-radius:7px; cursor:pointer; font-weight:600; font-size:13px;">
+           🗺️ Show on Map
+         </button>`
+      : '';
+
+    const card = document.createElement('div');
+    card.style.cssText = `
+      background:rgba(255,255,255,0.05);
+      border:1px solid rgba(255,255,255,0.1);
+      border-radius:12px;
+      padding:16px;
+    `;
+    card.innerHTML = `
+      <div style="font-size:16px; font-weight:800; color:#fff; margin-bottom:6px;">🏪 ${shop.username}</div>
+      <div style="font-size:13px; color:#ccc; margin-bottom:4px;">👤 <b>Owner:</b> ${shop.ownerName || 'N/A'}</div>
+      <div style="margin-bottom:6px;">${phoneHtml}</div>
+      <div style="border-top:1px solid rgba(255,255,255,0.08); padding-top:8px; margin-top:8px;">${branchList}</div>
+      ${flyBtn}
+    `;
+    container.appendChild(card);
+  });
+}
+
+function flyToShop(lat, lng) {
+  shopMap.flyTo([lat, lng], 15, { animate: true, duration: 1.2 });
+  // scroll map into view
+  document.getElementById('shopMap').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function locateMe() {
+  if (!navigator.geolocation) { alert('Geolocation not supported.'); return; }
+  navigator.geolocation.getCurrentPosition(pos => {
+    const { latitude: lat, longitude: lng } = pos.coords;
+
+    if (userMarker) shopMap.removeLayer(userMarker);
+
+    userMarker = L.marker([lat, lng], {
+      icon: L.divIcon({
+        className: '',
+        html: `<div style="
+          background:#3498db;
+          width:20px; height:20px;
+          border-radius:50%;
+          border:3px solid #fff;
+          box-shadow:0 0 0 4px rgba(52,152,219,0.3);"></div>`,
+        iconSize: [20, 20],
+        iconAnchor: [10, 10]
+      })
+    }).addTo(shopMap).bindPopup('<b>📍 You are here</b>').openPopup();
+
+    shopMap.flyTo([lat, lng], 14, { animate: true, duration: 1.5 });
+  }, () => alert('Could not get your location.'));
 }
 </script>
 </body>

@@ -70,6 +70,12 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- Email Service -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>
