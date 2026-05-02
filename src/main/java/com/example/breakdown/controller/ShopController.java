@@ -242,7 +242,7 @@ public class ShopController {
             if (excludeIds.contains(shop.getId())) continue;
             if (!isShopOpen(shop)) continue;
             double dist = getShopMinDistance(shop, lat, lng);
-            if (dist < minDist) { minDist = dist; nearest = shop; }
+            if (dist < minDist && dist <= 50.0) { minDist = dist; nearest = shop; }
         }
         return nearest;
     }
@@ -281,7 +281,7 @@ public class ShopController {
                 double dist = haversine(lat, lng, bLat, bLng);
                 if (dist < minDist) minDist = dist;
             }
-            return anyValidBranch ? minDist : 0.0;
+            return anyValidBranch ? minDist : Double.MAX_VALUE;
         } catch (Exception e) { return 0.0; }
     }
 
