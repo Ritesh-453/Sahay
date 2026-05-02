@@ -20,13 +20,23 @@ The intelligent platform connecting stranded drivers with professional mechanics
 
 ## 📸 Screenshots
 
-| Login Page | Customer Dashboard |
-|---|---|
-| ![Login](src/main/resources/static/assets/screenshots/login.png) | ![Customer](src/main/resources/static/assets/screenshots/customer.png) |
+### 🔐 Login Page
+![Login](src/main/resources/static/assets/screenshots/login.png)
 
-| Sevak — Offline Chatbot | Shop Dashboard |
-|---|---|
-| ![Sevak](src/main/resources/static/assets/screenshots/sevak.png) | ![Shop](src/main/resources/static/assets/screenshots/shop.png) |
+### 👤 Customer Dashboard
+![Customer Dashboard](src/main/resources/static/assets/screenshots/customer.png)
+
+### 🗺️ Nearby Shops Map
+![Shops Map](src/main/resources/static/assets/screenshots/map.png)
+
+### 🤖 Sevak — Offline Chatbot
+![Sevak](src/main/resources/static/assets/screenshots/sevak.png)
+
+### 🔧 Shop Dashboard
+![Shop Dashboard](src/main/resources/static/assets/screenshots/shop.png)
+
+### 🛡️ Admin — Analytics Dashboard
+![Admin Analytics](src/main/resources/static/assets/screenshots/admin.png)
 
 ---
 
@@ -174,12 +184,3 @@ The app is deployed on **Render** (Docker runtime) with **Clever Cloud MySQL** a
 > ⚠️ Free tier on Render spins down after inactivity — first request may take 50+ seconds.
 
 ---
-
-## 👨‍💻 Author
-
-**Ritesh Purohit**
-
-[![GitHub](https://img.shields.io/badge/GitHub-Ritesh--453-181717?style=flat&logo=github)](https://github.com/Ritesh-453)
-
----
-
