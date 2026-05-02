@@ -105,9 +105,10 @@ public class ShopController {
             if (stage.equals("BROADCAST")) {
                 List<Long> rejected = parseRejectedIds(req.getRejectedShopIds());
                 if (rejected.contains(shopId)) return false;
+                // Show to all shops if no coordinates set, or within 50km
                 if (req.getLatitude() == null || req.getLongitude() == null) return true;
                 double dist = getShopMinDistance(shop, req.getLatitude(), req.getLongitude());
-                return dist <= 50.0;
+                return dist <= 200.0; // expanded radius to 200km for better coverage
             }
             return false;
         }).collect(Collectors.toList());
@@ -152,19 +153,18 @@ public class ShopController {
 
         List<Shop> allShops = shopRepository.findAll();
 
-        if (rejected.size() <= 2) {
-            Shop nextShop = findNearestOpenShop(allShops, req.getLatitude(), req.getLongitude(), rejected);
-            if (nextShop != null) {
-                req.setAssignedShopId(nextShop.getId());
-                req.setAssignmentStage("ASSIGNED");
-                requestRepository.save(req);
-                emailService.sendReassignedNotification(nextShop, req);
-                return ResponseEntity.ok(req);
-            } else {
-                req.setAssignedShopId(null);
-                req.setAssignmentStage("BROADCAST");
-            }
+        // Always try to find next shop regardless of how many have rejected
+        double lat = req.getLatitude() != null ? req.getLatitude() : 0.0;
+        double lng = req.getLongitude() != null ? req.getLongitude() : 0.0;
+        Shop nextShop = findNearestOpenShop(allShops, lat, lng, rejected);
+        if (nextShop != null) {
+            req.setAssignedShopId(nextShop.getId());
+            req.setAssignmentStage("ASSIGNED");
+            requestRepository.save(req);
+            emailService.sendReassignedNotification(nextShop, req);
+            return ResponseEntity.ok(req);
         } else {
+            // No more shops available — broadcast to all
             req.setAssignedShopId(null);
             req.setAssignmentStage("BROADCAST");
             System.out.println(">>> ALL SHOPS REJECTED — sending admin email for request ID: " + req.getId());
@@ -248,24 +248,25 @@ public class ShopController {
     }
 
     private boolean isShopOpen(Shop shop) {
-        if (shop.getOpeningTime() == null || shop.getClosingTime() == null) return false;
+        if (shop.getOpeningTime() == null || shop.getClosingTime() == null) return true;
         try {
             String openStr = shop.getOpeningTime().trim();
             String closeStr = shop.getClosingTime().trim();
             if (openStr.length() > 5) openStr = openStr.substring(0, 5);
             if (closeStr.length() > 5) closeStr = closeStr.substring(0, 5);
-            LocalTime now = LocalTime.now();
+            LocalTime now = LocalTime.now(java.time.ZoneId.of("Asia/Kolkata"));
             LocalTime open = LocalTime.parse(openStr);
             LocalTime close = LocalTime.parse(closeStr);
             return !now.isBefore(open) && !now.isAfter(close);
-        } catch (Exception e) { return false; }
+        } catch (Exception e) { return true; }
     }
 
     private double getShopMinDistance(Shop shop, double lat, double lng) {
-        if (shop.getBranchesJson() == null || shop.getBranchesJson().isBlank()) return Double.MAX_VALUE;
+        if (shop.getBranchesJson() == null || shop.getBranchesJson().isBlank()) return 0.0;
         try {
             List<Map<String, Object>> branches = objectMapper.readValue(shop.getBranchesJson(), List.class);
             double minDist = Double.MAX_VALUE;
+            boolean anyValidBranch = false;
             for (Map<String, Object> branch : branches) {
                 Object latObj = branch.get("lat");
                 Object lngObj = branch.get("lng");
@@ -276,11 +277,12 @@ public class ShopController {
                 double bLat = Double.parseDouble(latStr);
                 double bLng = Double.parseDouble(lngStr);
                 if (bLat == 0.0 && bLng == 0.0) continue;
+                anyValidBranch = true;
                 double dist = haversine(lat, lng, bLat, bLng);
                 if (dist < minDist) minDist = dist;
             }
-            return minDist;
-        } catch (Exception e) { return Double.MAX_VALUE; }
+            return anyValidBranch ? minDist : 0.0;
+        } catch (Exception e) { return 0.0; }
     }
 
     private double haversine(double lat1, double lon1, double lat2, double lon2) {

@@ -156,24 +156,25 @@ public class ServiceRequestController {
     }
 
     public boolean isShopOpen(Shop shop) {
-        if (shop.getOpeningTime() == null || shop.getClosingTime() == null) return false;
+        if (shop.getOpeningTime() == null || shop.getClosingTime() == null) return true;
         try {
             String openStr = shop.getOpeningTime().trim();
             String closeStr = shop.getClosingTime().trim();
             if (openStr.length() > 5) openStr = openStr.substring(0, 5);
             if (closeStr.length() > 5) closeStr = closeStr.substring(0, 5);
-            LocalTime now = LocalTime.now();
+            LocalTime now = LocalTime.now(java.time.ZoneId.of("Asia/Kolkata"));
             LocalTime open = LocalTime.parse(openStr);
             LocalTime close = LocalTime.parse(closeStr);
             return !now.isBefore(open) && !now.isAfter(close);
-        } catch (Exception e) { return false; }
+        } catch (Exception e) { return true; }
     }
 
     public double getShopMinDistance(Shop shop, double lat, double lng) {
-        if (shop.getBranchesJson() == null || shop.getBranchesJson().isBlank()) return Double.MAX_VALUE;
+        if (shop.getBranchesJson() == null || shop.getBranchesJson().isBlank()) return 0.0;
         try {
             List<Map<String, Object>> branches = objectMapper.readValue(shop.getBranchesJson(), List.class);
             double minDist = Double.MAX_VALUE;
+            boolean anyValidBranch = false;
             for (Map<String, Object> branch : branches) {
                 Object latObj = branch.get("lat");
                 Object lngObj = branch.get("lng");
@@ -184,11 +185,13 @@ public class ServiceRequestController {
                 double bLat = Double.parseDouble(latStr);
                 double bLng = Double.parseDouble(lngStr);
                 if (bLat == 0.0 && bLng == 0.0) continue;
+                anyValidBranch = true;
                 double dist = haversine(lat, lng, bLat, bLng);
                 if (dist < minDist) minDist = dist;
             }
-            return minDist;
-        } catch (Exception e) { return Double.MAX_VALUE; }
+            // If no branch has coordinates set, treat as local shop (distance 0)
+            return anyValidBranch ? minDist : 0.0;
+        } catch (Exception e) { return 0.0; }
     }
 
     public double haversine(double lat1, double lon1, double lat2, double lon2) {
