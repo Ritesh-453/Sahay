@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sahay — Track Mechanic</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',sans-serif; background:#0a0b14; color:#fff; min-height:100vh; display:flex; flex-direction:column; }
+  .header { background:#13141f; border-bottom:1px solid rgba(255,255,255,0.08); padding:14px 24px; display:flex; align-items:center; gap:12px; }
+  .header h1 { font-size:18px; font-weight:800; color:#ff6600; }
+  .header .back { color:#aaa; text-decoration:none; font-size:13px; }
+  .info-bar { background:#13141f; padding:12px 24px; display:flex; gap:20px; flex-wrap:wrap; border-bottom:1px solid rgba(255,255,255,0.06); }
+  .info-item { font-size:13px; color:#aaa; }
+  .info-item b { color:#fff; }
+  .status-badge { display:inline-flex; align-items:center; gap:6px; background:rgba(39,174,96,0.15); border:1px solid rgba(39,174,96,0.3); color:#27ae60; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:700; }
+  .status-dot { width:8px; height:8px; border-radius:50%; background:#27ae60; animation:pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+  #map { flex:1; min-height:calc(100vh - 140px); }
+  .waiting { display:flex; flex-direction:column; align-items:center; justify-content:center; flex:1; gap:16px; color:#aaa; }
+  .waiting .spinner { width:40px; height:40px; border:3px solid rgba(255,255,255,0.1); border-top-color:#ff6600; border-radius:50%; animation:spin 1s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .error-screen { display:flex; flex-direction:column; align-items:center; justify-content:center; flex:1; gap:12px; color:#e74c3c; font-size:15px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <a href="javascript:history.back()" class="back">← Back</a>
+  <h1>🔧 Live Mechanic Tracking</h1>
+  <span class="status-badge" id="liveBadge" style="display:none;">
+    <span class="status-dot"></span> LIVE
+  </span>
+</div>
+
+<div class="info-bar" id="infoBar" style="display:none;">
+  <div class="info-item">🆔 Request <b id="reqIdLabel"></b></div>
+  <div class="info-item">🔧 Mechanic <b id="mechNameLabel"></b></div>
+  <div class="info-item">📞 <b id="mechPhoneLabel"></b></div>
+  <div class="info-item">⏱️ Last update: <b id="lastUpdate">--</b></div>
+</div>
+
+<div class="waiting" id="waitingScreen">
+  <div class="spinner"></div>
+  <div>Waiting for mechanic to share location...</div>
+  <div style="font-size:12px; color:#555;">Page auto-refreshes every second</div>
+</div>
+
+<div id="map" style="display:none;"></div>
+
+<div class="error-screen" id="errorScreen" style="display:none;">
+  <div>⛔ Access Denied</div>
+  <div style="font-size:13px; color:#aaa;">You are not authorized to view this tracking.</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+const API = "http://localhost:8082";
+const params = new URLSearchParams(window.location.search);
+const requestId = params.get('requestId');
+const requester = params.get('requester');
+const role      = params.get('role');   // CUSTOMER, SHOP, ADMIN
+
+let map = null;
+let mechanicMarker = null;
+let customerMarker = null;
+let initialized = false;
+
+if (!requestId || !requester || !role) {
+  document.getElementById('waitingScreen').style.display = 'none';
+  document.getElementById('errorScreen').style.display = 'flex';
+  document.getElementById('errorScreen').querySelector('div:last-child').textContent = 'Missing parameters in URL.';
+} else {
+  fetchLocation();
+  setInterval(fetchLocation, 1000);
+}
+
+async function fetchLocation() {
+  try {
+    const res = await fetch(`${API}/api/track/${requestId}/location?requester=${encodeURIComponent(requester)}&role=${role}`);
+    if (res.status === 403) {
+      document.getElementById('waitingScreen').style.display = 'none';
+      document.getElementById('errorScreen').style.display = 'flex';
+      return;
+    }
+    const data = await res.json();
+
+    if (!data.available) {
+      // Still waiting
+      return;
+    }
+
+    // Got location — show map
+    document.getElementById('waitingScreen').style.display = 'none';
+    document.getElementById('infoBar').style.display = 'flex';
+    document.getElementById('liveBadge').style.display = 'inline-flex';
+    document.getElementById('reqIdLabel').textContent = '#' + requestId;
+    document.getElementById('mechNameLabel').textContent = data.mechanicName || 'N/A';
+    document.getElementById('mechPhoneLabel').textContent = data.mechanicPhone || '';
+    document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('en-IN');
+
+    if (!initialized) {
+      document.getElementById('map').style.display = 'block';
+      map = L.map('map').setView([data.lat, data.lng], 15);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap', maxZoom: 19
+      }).addTo(map);
+
+      // Mechanic marker
+      mechanicMarker = L.marker([data.lat, data.lng], { icon: mechanicIcon() })
+        .addTo(map)
+        .bindPopup(`<b>🔧 ${data.mechanicName || 'Mechanic'}</b><br>📞 ${data.mechanicPhone || ''}`);
+
+      // Customer marker
+      if (data.customerLat && data.customerLng && (data.customerLat !== 0 || data.customerLng !== 0)) {
+        customerMarker = L.marker([data.customerLat, data.customerLng], { icon: customerIcon() })
+          .addTo(map)
+          .bindPopup('<b>📍 Customer Location</b>');
+        // Fit bounds to show both
+        map.fitBounds([
+          [data.lat, data.lng],
+          [data.customerLat, data.customerLng]
+        ], { padding: [60, 60] });
+      }
+      initialized = true;
+    } else {
+      // Update mechanic marker position smoothly
+      mechanicMarker.setLatLng([data.lat, data.lng]);
+      mechanicMarker.setPopupContent(`<b>🔧 ${data.mechanicName || 'Mechanic'}</b><br>📞 ${data.mechanicPhone || ''}<br><small>Updated: ${new Date().toLocaleTimeString('en-IN')}</small>`);
+    }
+  } catch(e) {
+    console.error('Tracking error:', e);
+  }
+}
+
+function mechanicIcon() {
+  return L.divIcon({
+    className: '',
+    html: `<div style="
+      background:#ff6600;
+      width:42px; height:42px;
+      border-radius:50% 50% 50% 0;
+      transform:rotate(-45deg);
+      border:3px solid #fff;
+      box-shadow:0 3px 12px rgba(255,102,0,0.5);
+      display:flex; align-items:center; justify-content:center;">
+      <span style="transform:rotate(45deg); font-size:20px;">🔧</span>
+    </div>`,
+    iconSize: [42, 42],
+    iconAnchor: [21, 42],
+    popupAnchor: [0, -44]
+  });
+}
+
+function customerIcon() {
+  return L.divIcon({
+    className: '',
+    html: `<div style="
+      background:#3498db;
+      width:36px; height:36px;
+      border-radius:50%;
+      border:3px solid #fff;
+      box-shadow:0 0 0 4px rgba(52,152,219,0.3);
+      display:flex; align-items:center; justify-content:center;
+      font-size:18px;">📍</div>`,
+    iconSize: [36, 36],
+    iconAnchor: [18, 18]
+  });
+}
+</script>
+</body>
+</html>

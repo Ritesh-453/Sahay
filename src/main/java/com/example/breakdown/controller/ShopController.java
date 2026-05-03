@@ -89,26 +89,29 @@ public class ShopController {
 
     @GetMapping("/requests")
     public List<ServiceRequest> getRequestsForShop(@RequestParam(required = false) String username) {
-        List<ServiceRequest> pending = requestRepository.findByStatus("Pending");
-        if (username == null || username.isBlank()) return pending;
+        if (username == null || username.isBlank()) return requestRepository.findByStatus("Pending");
 
         Optional<Shop> shopOpt = shopRepository.findByUsername(username);
         if (shopOpt.isEmpty()) return new ArrayList<>();
         Shop shop = shopOpt.get();
         Long shopId = shop.getId();
 
-        return pending.stream().filter(req -> {
+        List<ServiceRequest> all = requestRepository.findAll();
+        return all.stream().filter(req -> {
+            String status = req.getStatus();
+            // Accepted — only show to shop that accepted it
+            if ("Accepted".equals(status)) return shopId.equals(req.getAssignedShopId());
+            // Only process Pending from here
+            if (!"Pending".equals(status)) return false;
             String stage = req.getAssignmentStage();
-            if (stage == null) return true;
-            if (stage.equals("OPEN")) return true;
+            if (stage == null || stage.equals("OPEN")) return true;
             if (stage.equals("ASSIGNED")) return shopId.equals(req.getAssignedShopId());
             if (stage.equals("BROADCAST")) {
                 List<Long> rejected = parseRejectedIds(req.getRejectedShopIds());
                 if (rejected.contains(shopId)) return false;
-                // Show to all shops if no coordinates set, or within 50km
                 if (req.getLatitude() == null || req.getLongitude() == null) return true;
                 double dist = getShopMinDistance(shop, req.getLatitude(), req.getLongitude());
-                return dist <= 200.0; // expanded radius to 200km for better coverage
+                return dist <= 200.0;
             }
             return false;
         }).collect(Collectors.toList());
@@ -189,11 +192,17 @@ public class ShopController {
 
     @PatchMapping("/requests/{id}/accept")
     public ResponseEntity<?> acceptRequest(@PathVariable Long id, @RequestBody Map<String, String> body) {
+        String username = body.get("shopUsername");
         return requestRepository.findById(id)
                 .map(req -> {
                     if (!"Pending".equals(req.getStatus()))
                         return ResponseEntity.badRequest().body("Request is no longer pending.");
                     req.setStatus("Accepted");
+                    // Set assignedShopId so the shop can see the request after accepting
+                    if (username != null && !username.isBlank()) {
+                        shopRepository.findByUsername(username)
+                                .ifPresent(shop -> req.setAssignedShopId(shop.getId()));
+                    }
                     req.setMechanicName(body.get("mechanicName"));
                     req.setMechanicPhone(body.get("mechanicPhone"));
                     req.setMechanicEta(body.get("estimatedArrival"));

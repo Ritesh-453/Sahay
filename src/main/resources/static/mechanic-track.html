@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sahay — Mechanic Tracker</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',sans-serif; background:#0a0b14; color:#fff; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; }
+  .card { background:#13141f; border:1px solid rgba(255,255,255,0.08); border-radius:20px; padding:32px 28px; width:100%; max-width:420px; text-align:center; }
+  .logo { font-size:32px; margin-bottom:8px; }
+  h1 { font-size:22px; font-weight:800; color:#ff6600; margin-bottom:4px; }
+  .sub { font-size:13px; color:#aaa; margin-bottom:28px; }
+  .status-dot { width:14px; height:14px; border-radius:50%; background:#555; display:inline-block; margin-right:8px; transition:background 0.3s; }
+  .status-dot.active { background:#27ae60; box-shadow:0 0 0 4px rgba(39,174,96,0.25); animation:pulse 1.5s infinite; }
+  .status-dot.error { background:#e74c3c; }
+  @keyframes pulse { 0%,100%{box-shadow:0 0 0 4px rgba(39,174,96,0.25);} 50%{box-shadow:0 0 0 8px rgba(39,174,96,0.1);} }
+  .status-row { display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:600; margin-bottom:20px; }
+  .btn { width:100%; padding:16px; border:none; border-radius:12px; font-size:16px; font-weight:700; cursor:pointer; transition:all 0.2s; margin-bottom:12px; }
+  .btn-start { background:#27ae60; color:#fff; }
+  .btn-start:hover { background:#219a52; }
+  .btn-stop { background:#e74c3c; color:#fff; }
+  .btn-stop:hover { background:#c0392b; }
+  .btn:disabled { opacity:0.5; cursor:not-allowed; }
+  .info-box { background:rgba(255,102,0,0.08); border:1px solid rgba(255,102,0,0.2); border-radius:12px; padding:16px; margin-bottom:20px; text-align:left; }
+  .info-row { font-size:13px; color:#ccc; margin-bottom:6px; }
+  .info-row b { color:#ff6600; }
+  .coords { font-size:12px; color:#666; margin-top:16px; font-family:monospace; }
+  .update-count { font-size:12px; color:#555; margin-top:8px; }
+  .error-msg { color:#e74c3c; font-size:13px; margin-top:12px; display:none; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">🔧</div>
+  <h1>Mechanic Tracker</h1>
+  <p class="sub">Share your live location with the customer</p>
+
+  <div class="info-box" id="infoBox">
+    <div class="info-row">Loading request details...</div>
+  </div>
+
+  <div class="status-row">
+    <span class="status-dot" id="dot"></span>
+    <span id="statusText">Not sharing</span>
+  </div>
+
+  <button class="btn btn-start" id="startBtn" onclick="startTracking()">📡 Start Sharing Location</button>
+  <button class="btn btn-stop" id="stopBtn" onclick="stopTracking()" style="display:none;">⛔ Stop Sharing</button>
+
+  <div class="coords" id="coords"></div>
+  <div class="update-count" id="updateCount"></div>
+  <div class="error-msg" id="errorMsg"></div>
+</div>
+
+<script>
+const API = "http://localhost:8082";
+const params = new URLSearchParams(window.location.search);
+const requestId = params.get('requestId');
+
+let watchId = null;
+let updateInterval = null;
+let currentLat = null;
+let currentLng = null;
+let updatesSent = 0;
+
+// Load request info on page load
+window.addEventListener('load', async () => {
+  if (!requestId) {
+    document.getElementById('infoBox').innerHTML = '<div class="info-row" style="color:#e74c3c;">❌ No request ID in URL. Ask shop to resend the link.</div>';
+    return;
+  }
+  try {
+    const res = await fetch(API + '/api/requests/' + requestId);
+    // Admin endpoint returns full list, use direct id
+    const allRes = await fetch(API + '/api/requests');
+    const all = await allRes.json();
+    const req = all.find(r => r.id == requestId);
+    if (req) {
+      document.getElementById('infoBox').innerHTML = `
+        <div class="info-row">🆔 <b>Request #${req.id}</b></div>
+        <div class="info-row">👤 <b>Customer:</b> ${req.customerName || 'N/A'}</div>
+        <div class="info-row">🚗 <b>Vehicle:</b> ${req.vehicleNumber || 'N/A'}</div>
+        <div class="info-row">🔧 <b>Issue:</b> ${req.issue || 'N/A'}</div>
+        <div class="info-row">📞 <b>Your Name:</b> ${req.mechanicName || 'N/A'}</div>
+      `;
+    }
+  } catch(e) {
+    document.getElementById('infoBox').innerHTML = '<div class="info-row" style="color:#aaa;">Could not load request details.</div>';
+  }
+});
+
+function startTracking() {
+  if (!requestId) { showError('No request ID. Use the link sent by your shop.'); return; }
+  if (!navigator.geolocation) { showError('Geolocation not supported on this device.'); return; }
+
+  document.getElementById('startBtn').style.display = 'none';
+  document.getElementById('stopBtn').style.display = 'block';
+  document.getElementById('statusText').textContent = 'Getting location...';
+
+  // Watch GPS continuously
+  watchId = navigator.geolocation.watchPosition(
+    pos => {
+      currentLat = pos.coords.latitude;
+      currentLng = pos.coords.longitude;
+      document.getElementById('dot').className = 'status-dot active';
+      document.getElementById('statusText').textContent = 'Sharing live location';
+      document.getElementById('coords').textContent = `📍 ${currentLat.toFixed(6)}, ${currentLng.toFixed(6)}`;
+      document.getElementById('errorMsg').style.display = 'none';
+    },
+    err => {
+      showError('Location error: ' + err.message);
+    },
+    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+  );
+
+  // Send to server every 1 second
+  updateInterval = setInterval(async () => {
+    if (currentLat === null || currentLng === null) return;
+    try {
+      await fetch(API + '/api/track/' + requestId + '/location', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lat: currentLat, lng: currentLng })
+      });
+      updatesSent++;
+      document.getElementById('updateCount').textContent = `✅ ${updatesSent} updates sent`;
+    } catch(e) {
+      document.getElementById('updateCount').textContent = '⚠️ Failed to send update';
+    }
+  }, 1000);
+}
+
+function stopTracking() {
+  if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+  if (updateInterval !== null) { clearInterval(updateInterval); updateInterval = null; }
+  document.getElementById('startBtn').style.display = 'block';
+  document.getElementById('stopBtn').style.display = 'none';
+  document.getElementById('dot').className = 'status-dot';
+  document.getElementById('statusText').textContent = 'Not sharing';
+  currentLat = null; currentLng = null; updatesSent = 0;
+  document.getElementById('updateCount').textContent = '';
+}
+
+function showError(msg) {
+  document.getElementById('dot').className = 'status-dot error';
+  document.getElementById('statusText').textContent = 'Error';
+  const el = document.getElementById('errorMsg');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+</script>
+</body>
+</html>

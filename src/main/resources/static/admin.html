@@ -618,7 +618,7 @@
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
-const API = "https://sahay-n69u.onrender.com";
+const API = "http://localhost:8082";
 const role = localStorage.getItem("role");
 if (!role || role !== "ADMIN") { alert("Access denied!"); window.location.href = "index.html"; }
 
@@ -668,7 +668,8 @@ function fetchRequests() {
                             <button class="btn-action btn-forward" onclick="forwardToNextShop(${req.id})" title="Forward to next available shop">⏩ Next Shop</button>
                           </div>`;
             } else if (req.status === "Accepted") {
-                action = `<button class="btn-action btn-complete" onclick="updateStatus(${req.id}, 'Completed')">Mark Complete</button>`;
+                action = `<button class="btn-action btn-complete" onclick="updateStatus(${req.id}, 'Completed')">Mark Complete</button>
+                          <a class="btn-action" style="background:#8e44ad;color:#fff;text-decoration:none;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;margin-top:4px;display:inline-block;" href="track-view.html?requestId=${req.id}&requester=admin&role=ADMIN" target="_blank">📍 Track Mechanic</a>`;
             } else {
                 action = `<button class="btn-action btn-done" disabled>Done</button>`;
             }

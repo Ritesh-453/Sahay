@@ -687,31 +687,6 @@ tbody tr:last-child td { border-bottom: none; }
         </div>
     </div>
 
-    <!-- Nearby Shops Map Section -->
-    <div class="section-header" style="margin-top:40px;">
-        <h2>🗺️ Nearby Shops Map</h2>
-        <div class="line"></div>
-    </div>
-
-    <div class="card" style="padding:20px;">
-        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
-            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-                <span id="offlineMapBadge" style="display:none; background:#e74c3c; color:#fff; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:700;">📴 OFFLINE MODE</span>
-                <span id="onlineMapBadge" style="background:#27ae60; color:#fff; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:700;">🟢 LIVE</span>
-                <span id="shopCountBadge" style="background:var(--accent,#ff6600); color:#fff; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:700;">0 shops</span>
-            </div>
-            <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                <button onclick="locateMe()" style="background:#3498db; color:#fff; border:none; padding:8px 18px; border-radius:8px; cursor:pointer; font-weight:600;">📍 My Location</button>
-                <button onclick="refreshShops()" style="background:#27ae60; color:#fff; border:none; padding:8px 18px; border-radius:8px; cursor:pointer; font-weight:600;">🔄 Refresh Shops</button>
-            </div>
-        </div>
-
-        <!-- Map Container -->
-        <div id="shopMap" style="width:100%; height:480px; border-radius:12px; border:2px solid rgba(255,255,255,0.1); z-index:1;"></div>
-
-        <!-- Shop List Cards -->
-        <div id="shopListCards" style="margin-top:20px; display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px;"></div>
-    </div>
 
     <div class="section-header" style="margin-top:40px;">
         <h2>Your Requests</h2>
@@ -871,8 +846,9 @@ tbody tr:last-child td { border-bottom: none; }
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
-const API = "https://sahay-n69u.onrender.com";
+const API = "http://localhost:8082";
 const uname = localStorage.getItem("username");
+const sUser = uname; // alias used in tracking links
 const role = localStorage.getItem("role");
 if (!uname || role !== "CUSTOMER") { alert("Access denied!"); window.location.href = "index.html"; }
 document.getElementById("user").innerText = uname;
@@ -1059,6 +1035,8 @@ function fetchReqs() {
       let actions = '';
       if ((req.status === "Accepted" || req.status === "Completed") && req.mechanicName)
         actions += '<button class="btn-action btn-det" onclick=\'showMech(' + JSON.stringify(req).replace(/'/g,"&#39;") + ')\'>Details</button>';
+      if (req.status === "Accepted" && req.mechanicName)
+        actions += '<a class="btn-action" style="background:#8e44ad;color:#fff;text-decoration:none;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;margin-left:4px;" href="track-view.html?requestId=' + req.id + '&requester=' + encodeURIComponent(sUser) + '&role=CUSTOMER" target="_blank">📍 Track</a>';
       if (req.status === "Pending")
         actions += '<button class="btn-action btn-del" onclick="askDelete(' + req.id + ')">Delete</button>';
       if (req.status === "Completed" && !req.reviewRating)
@@ -1086,7 +1064,9 @@ function fetchReqs() {
 // ---- Mechanic details ----
 function showMech(req) {
   document.getElementById("dN").innerText = req.mechanicName || "-";
-  document.getElementById("dP").innerText = req.mechanicPhone || "-";
+  document.getElementById("dP").innerHTML = req.mechanicPhone
+    ? `<a href="tel:${req.mechanicPhone}" style="color:#ff6600;font-weight:700;text-decoration:none;">📞 ${req.mechanicPhone}</a>`
+    : "-";
   document.getElementById("dT").innerText = req.mechanicEta || req.estimatedArrival || "-";
   const has = req.mechanicLatitude && req.mechanicLongitude;
   document.getElementById("dL").innerText = has ? parseFloat(req.mechanicLatitude).toFixed(4) + ', ' + parseFloat(req.mechanicLongitude).toFixed(4) : "Not shared";

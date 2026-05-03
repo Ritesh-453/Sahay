@@ -8,7 +8,7 @@
 
 The intelligent platform connecting stranded drivers with professional mechanics — fast, transparent, and trackable.
 
-[![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-sahay--n69u.onrender.com-635bff?style=for-the-badge)](https://sahay-n69u.onrender.com)
+[![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-sahay--n69u.onrender.com-635bff?style=for-the-badge)](http://localhost:8082)
 [![Java](https://img.shields.io/badge/Java-17-orange?style=for-the-badge&logo=java)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.x-6DB33F?style=for-the-badge&logo=springboot)](https://spring.io/projects/spring-boot)
 [![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
@@ -178,7 +178,7 @@ src/
 
 The app is deployed on **Render** (Docker runtime) with **Clever Cloud MySQL** as the database.
 
-- **Live URL:** https://sahay-n69u.onrender.com
+- **Live URL:** http://localhost:8082
 - **Database:** Clever Cloud MySQL 8.0 (Paris region)
 
 > ⚠️ Free tier on Render spins down after inactivity — first request may take 50+ seconds.

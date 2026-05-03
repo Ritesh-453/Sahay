@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sahay — Smart Roadside Assistance</title>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
     <style>
         :root {
             --bg-void: #06070f;
@@ -61,7 +62,7 @@
             justify-content: center;
             padding: 70px 64px;
             position: relative;
-            overflow: hidden;
+            overflow: visible;
             background: var(--bg-deep);
         }
 
@@ -653,11 +654,35 @@
                     Verified mechanics with reviews
                 </div>
             </div>
+
+            <!-- Offline Tools (shown only when offline) -->
+            <div id="offlineTools" style="display:none; margin-top:28px; flex-wrap:wrap; gap:12px;">
+                <a href="sevak.html" style="display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#fff; padding:10px 20px; border-radius:10px; text-decoration:none; font-weight:600; font-size:14px;">
+                    🤖 Sevak — Offline Assistant
+                </a>
+                <button onclick="document.getElementById('offlineMapSection').scrollIntoView({behavior:'smooth'})" style="display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#fff; padding:10px 20px; border-radius:10px; cursor:pointer; font-weight:600; font-size:14px;">
+                    🗺️ Nearby Shops Map
+                </button>
+            </div>
         </div>
     </div>
 
+    <!-- Nearby Shops Map — outside hero so Leaflet renders correctly -->
+    <div id="offlineMapSection" style="display:none; background:#0d0e1a; padding:40px 64px; border-top:1px solid rgba(255,255,255,0.07);">
+        <h3 style="color:#fff; margin-bottom:14px; font-size:20px;">🗺️ Nearby Shops Map</h3>
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:14px;">
+            <span id="offlineMapBadge" style="display:none; background:#e74c3c; color:#fff; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:700;">📴 OFFLINE MODE</span>
+            <span id="onlineMapBadge" style="background:#27ae60; color:#fff; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:700;">🟢 LIVE</span>
+            <span id="shopCountBadge" style="background:#ff6600; color:#fff; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:700;">0 shops</span>
+            <button onclick="locateMe()" style="background:#3498db; color:#fff; border:none; padding:6px 14px; border-radius:8px; cursor:pointer; font-weight:600; font-size:13px;">📍 My Location</button>
+            <button onclick="refreshShops()" style="background:#27ae60; color:#fff; border:none; padding:6px 14px; border-radius:8px; cursor:pointer; font-weight:600; font-size:13px;">🔄 Refresh</button>
+        </div>
+        <div id="shopMap" style="width:100%; height:480px; border-radius:12px; border:2px solid rgba(255,255,255,0.1);"></div>
+        <div id="shopListCards" style="margin-top:20px; display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:12px;"></div>
+    </div>
+
     <!-- ═══════════════ FORM ═══════════════ -->
-    <div class="form-section">
+    <div class="form-section" id="loginFormSection">
         <div class="form-container">
 
             <div class="mob-brand">
@@ -849,7 +874,7 @@
     </div>
 
 <script>
-const API = "https://sahay-n69u.onrender.com";
+const API = "http://localhost:8082";
 
 function show(id) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -1054,6 +1079,165 @@ function doShopRegister() {
         setMsg('srMsg', 'Shop registered! Redirecting...', 'ok');
         setTimeout(() => show('vShopLogin'), 1500);
     }).catch(() => setMsg('srMsg', 'Registration failed. Try again.', 'err'));
+}
+
+// ── Online / Offline UI toggle ──────────────────────────
+function applyNetworkMode() {
+  const isOnline = navigator.onLine;
+  const loginForm    = document.getElementById('loginFormSection');
+  const offlineTools = document.getElementById('offlineTools');
+  const offlineMap   = document.getElementById('offlineMapSection');
+
+  if (isOnline) {
+    // Online: show login, hide offline features
+    loginForm.style.display    = '';
+    offlineTools.style.display = 'none';
+    offlineMap.style.display   = 'none';
+  } else {
+    // Offline: hide login, show offline features
+    loginForm.style.display    = 'none';
+    offlineTools.style.display = 'flex';
+    offlineMap.style.display   = 'block';
+    // Init map when shown
+    if (!shopMap) {
+      if (typeof L !== 'undefined') { initShopMap(); loadShops(); }
+    }
+  }
+}
+
+window.addEventListener('load',    applyNetworkMode);
+window.addEventListener('online',  applyNetworkMode);
+window.addEventListener('offline', applyNetworkMode);
+// ────────────────────────────────────────────────────────
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+const SHOPS_CACHE_KEY = 'sahay_shops_cache';
+let shopMap = null;
+let shopMarkers = [];
+let userMarker = null;
+let allShopsData = [];
+
+window.addEventListener('load', function() {
+  function tryInit() {
+    if (typeof L === 'undefined') { setTimeout(tryInit, 200); return; }
+    initShopMap();
+    setTimeout(() => { loadShops(); updateNetworkBadge(); }, 600);
+  }
+  tryInit();
+  // network badge handled by applyNetworkMode
+});
+
+function updateNetworkBadge() {
+  const offline = document.getElementById('offlineMapBadge');
+  const online  = document.getElementById('onlineMapBadge');
+  if (navigator.onLine) { offline.style.display='none'; online.style.display='inline-block'; }
+  else { offline.style.display='inline-block'; online.style.display='none'; }
+}
+
+function initShopMap() {
+  shopMap = L.map('shopMap', { preferCanvas: true }).setView([20.5937, 78.9629], 5);
+  const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap', maxZoom: 19, crossOrigin: true
+  });
+  osmLayer.on('tileerror', function(e) {
+    e.tile.src = 'data:image/svg+xml;base64,' + btoa('<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"><rect width="256" height="256" fill="#1a1a2e"/><text x="128" y="128" text-anchor="middle" fill="#666" font-size="12" font-family="Arial">Offline</text></svg>');
+  });
+  osmLayer.addTo(shopMap);
+  setTimeout(() => { shopMap.invalidateSize(true); }, 300);
+  setTimeout(() => { shopMap.invalidateSize(true); }, 800);
+  setTimeout(() => { shopMap.invalidateSize(true); }, 1500);
+  setTimeout(() => { shopMap.invalidateSize(true); }, 3000);
+}
+
+function loadShops() {
+  if (navigator.onLine) {
+    fetch(API + '/api/shop/all')
+      .then(r => r.json())
+      .then(shops => {
+        allShopsData = shops;
+        try { localStorage.setItem(SHOPS_CACHE_KEY, JSON.stringify(shops)); } catch(e) {}
+        renderShopsOnMap(shops);
+        renderShopCards(shops);
+      }).catch(() => loadFromCache());
+  } else { loadFromCache(); }
+}
+
+function loadFromCache() {
+  let cached = null; try { cached = localStorage.getItem(SHOPS_CACHE_KEY); } catch(e) {}
+  if (cached) {
+    const shops = JSON.parse(cached);
+    allShopsData = shops;
+    renderShopsOnMap(shops);
+    renderShopCards(shops);
+  } else {
+    document.getElementById('shopListCards').innerHTML = '<p style="color:#aaa;text-align:center;grid-column:1/-1;">No shop data offline. Connect to internet once to load shops.</p>';
+  }
+}
+
+function refreshShops() {
+  shopMarkers.forEach(m => shopMap.removeLayer(m));
+  shopMarkers = [];
+  document.getElementById('shopListCards').innerHTML = '';
+  loadShops();
+}
+
+function renderShopsOnMap(shops) {
+  const bounds = [];
+  let total = 0;
+  shops.forEach(shop => {
+    let branches = [];
+    try { branches = JSON.parse(shop.branchesJson || '[]'); } catch(e) {}
+    branches.forEach(branch => {
+      if (!branch.lat || !branch.lng) return;
+      total++;
+      const icon = L.divIcon({
+        className: '',
+        html: '<div style="background:#ff6600;width:34px;height:34px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;"><span style="transform:rotate(45deg);font-size:16px;">🔧</span></div>',
+        iconSize: [34,34], iconAnchor: [17,34], popupAnchor: [0,-36]
+      });
+      const phoneLink = shop.phone ? '<a href="tel:' + shop.phone + '" style="color:#ff6600;font-weight:700;font-size:15px;text-decoration:none;">📞 ' + shop.phone + '</a>' : '<span style="color:#aaa;">No phone</span>';
+      const popup = '<div style="font-family:Arial,sans-serif;min-width:200px;padding:4px;"><div style="font-size:16px;font-weight:800;color:#1a1a2e;margin-bottom:6px;">🏪 ' + (branch.name || shop.username) + '</div><div style="font-size:13px;color:#555;margin-bottom:4px;">👤 <b>Owner:</b> ' + (shop.ownerName||'N/A') + '</div><div style="font-size:13px;color:#555;margin-bottom:6px;">📍 ' + (branch.address||'No address') + '</div><div style="margin-top:8px;">' + phoneLink + '</div></div>';
+      const marker = L.marker([branch.lat, branch.lng], { icon }).addTo(shopMap).bindPopup(popup, { maxWidth: 260 });
+      shopMarkers.push(marker);
+      bounds.push([branch.lat, branch.lng]);
+    });
+  });
+  document.getElementById('shopCountBadge').textContent = total + ' shop' + (total !== 1 ? 's' : '');
+  if (bounds.length > 0) shopMap.fitBounds(bounds, { padding: [40,40], maxZoom: 14 });
+}
+
+function renderShopCards(shops) {
+  const container = document.getElementById('shopListCards');
+  container.innerHTML = '';
+  if (!shops || shops.length === 0) { container.innerHTML = '<p style="color:#aaa;text-align:center;grid-column:1/-1;">No shops registered yet.</p>'; return; }
+  shops.forEach(shop => {
+    let branches = [];
+    try { branches = JSON.parse(shop.branchesJson || '[]'); } catch(e) {}
+    const phoneHtml = shop.phone ? '<a href="tel:' + shop.phone + '" style="color:#ff6600;font-weight:700;text-decoration:none;font-size:15px;">📞 ' + shop.phone + '</a>' : '<span style="color:#888;font-size:13px;">No phone</span>';
+    const branchList = branches.length > 0 ? branches.map(b => '<div style="font-size:12px;color:#aaa;margin-top:3px;">📍 ' + (b.name||'') + ' — ' + (b.address||'No address') + '</div>').join('') : '<div style="font-size:12px;color:#aaa;">No branch info</div>';
+    const flyBranch = branches.find(b => b.lat && b.lng);
+    const flyBtn = flyBranch ? '<button onclick="flyToShop(' + flyBranch.lat + ',' + flyBranch.lng + ')" style="margin-top:10px;width:100%;background:#ff6600;color:#fff;border:none;padding:7px;border-radius:7px;cursor:pointer;font-weight:600;font-size:13px;">🗺️ Show on Map</button>' : '';
+    const card = document.createElement('div');
+    card.style.cssText = 'background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:16px;';
+    card.innerHTML = '<div style="font-size:16px;font-weight:800;color:#fff;margin-bottom:6px;">🏪 ' + shop.username + '</div><div style="font-size:13px;color:#ccc;margin-bottom:4px;">👤 <b>Owner:</b> ' + (shop.ownerName||'N/A') + '</div><div style="margin-bottom:6px;">' + phoneHtml + '</div><div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:8px;margin-top:8px;">' + branchList + '</div>' + flyBtn;
+    container.appendChild(card);
+  });
+}
+
+function flyToShop(lat, lng) {
+  shopMap.flyTo([lat, lng], 15, { animate: true, duration: 1.2 });
+  document.getElementById('shopMap').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function locateMe() {
+  if (!navigator.geolocation) { alert('Geolocation not supported.'); return; }
+  navigator.geolocation.getCurrentPosition(pos => {
+    const { latitude: lat, longitude: lng } = pos.coords;
+    if (userMarker) shopMap.removeLayer(userMarker);
+    userMarker = L.marker([lat, lng], { icon: L.divIcon({ className:'', html:'<div style="background:#3498db;width:20px;height:20px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 4px rgba(52,152,219,0.3);"></div>', iconSize:[20,20], iconAnchor:[10,10] }) }).addTo(shopMap).bindPopup('<b>📍 You are here</b>').openPopup();
+    shopMap.flyTo([lat, lng], 14, { animate: true, duration: 1.5 });
+  }, () => alert('Could not get your location.'));
 }
 </script>
 </body>

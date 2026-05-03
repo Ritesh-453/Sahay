@@ -76,13 +76,14 @@ public class ServiceRequestController {
                 emailService.sendNewRequestNotification(nearest, saved);
                 return saved;
             } else {
+                // No shop found — broadcast so all shops can see it
                 request.setAssignedShopId(null);
-                request.setAssignmentStage("OPEN");
+                request.setAssignmentStage("BROADCAST");
             }
         } else {
-            System.out.println("LAT/LNG IS NULL - falling to OPEN");
+            System.out.println("LAT/LNG IS NULL - falling to BROADCAST");
             request.setAssignedShopId(null);
-            request.setAssignmentStage("OPEN");
+            request.setAssignmentStage("BROADCAST");
         }
 
         return requestRepository.save(request);
@@ -170,7 +171,10 @@ public class ServiceRequestController {
     }
 
     public double getShopMinDistance(Shop shop, double lat, double lng) {
-        if (shop.getBranchesJson() == null || shop.getBranchesJson().isBlank()) return Double.MAX_VALUE;
+        if (shop.getBranchesJson() == null || shop.getBranchesJson().isBlank()) {
+            // FIX: No branches configured — treat shop as local (distance 0) so it gets assigned
+            return 0.0;
+        }
         try {
             List<Map<String, Object>> branches = objectMapper.readValue(shop.getBranchesJson(), List.class);
             double minDist = Double.MAX_VALUE;
@@ -189,8 +193,8 @@ public class ServiceRequestController {
                 double dist = haversine(lat, lng, bLat, bLng);
                 if (dist < minDist) minDist = dist;
             }
-            // If no branch has coordinates set, treat as local shop (distance 0)
-            return anyValidBranch ? minDist : Double.MAX_VALUE;
+            // FIX: If branches exist but none have valid coordinates — treat as local (distance 0)
+            return anyValidBranch ? minDist : 0.0;
         } catch (Exception e) { return 0.0; }
     }
 
