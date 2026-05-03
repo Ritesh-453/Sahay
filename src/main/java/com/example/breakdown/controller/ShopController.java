@@ -242,7 +242,7 @@ public class ShopController {
             if (excludeIds.contains(shop.getId())) continue;
             if (!isShopOpen(shop)) continue;
             double dist = getShopMinDistance(shop, lat, lng);
-            if (dist < minDist && dist <= 50.0) { minDist = dist; nearest = shop; }
+            if (dist < minDist) { minDist = dist; nearest = shop; }
         }
         return nearest;
     }
@@ -262,7 +262,7 @@ public class ShopController {
     }
 
     private double getShopMinDistance(Shop shop, double lat, double lng) {
-        if (shop.getBranchesJson() == null || shop.getBranchesJson().isBlank()) return 0.0;
+        if (shop.getBranchesJson() == null || shop.getBranchesJson().isBlank()) return Double.MAX_VALUE;
         try {
             List<Map<String, Object>> branches = objectMapper.readValue(shop.getBranchesJson(), List.class);
             double minDist = Double.MAX_VALUE;
@@ -282,7 +282,7 @@ public class ShopController {
                 if (dist < minDist) minDist = dist;
             }
             return anyValidBranch ? minDist : Double.MAX_VALUE;
-        } catch (Exception e) { return 0.0; }
+        } catch (Exception e) { return Double.MAX_VALUE; }
     }
 
     private double haversine(double lat1, double lon1, double lat2, double lon2) {

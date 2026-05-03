@@ -150,7 +150,7 @@ public class ServiceRequestController {
             if (excludeIds.contains(shop.getId())) continue;
             if (!isShopOpen(shop)) continue;
             double dist = getShopMinDistance(shop, lat, lng);
-            if (dist < minDist && dist <= 50.0) { minDist = dist; nearest = shop; }
+            if (dist < minDist) { minDist = dist; nearest = shop; }
         }
         return nearest;
     }
@@ -170,7 +170,7 @@ public class ServiceRequestController {
     }
 
     public double getShopMinDistance(Shop shop, double lat, double lng) {
-        if (shop.getBranchesJson() == null || shop.getBranchesJson().isBlank()) return 0.0;
+        if (shop.getBranchesJson() == null || shop.getBranchesJson().isBlank()) return Double.MAX_VALUE;
         try {
             List<Map<String, Object>> branches = objectMapper.readValue(shop.getBranchesJson(), List.class);
             double minDist = Double.MAX_VALUE;
