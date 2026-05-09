@@ -102,6 +102,14 @@ public class ServiceRequestController {
         ServiceRequest req = requestRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Request not found"));
         req.setStatus("Accepted");
+
+        // ✅ FIX: set assignedShopId so the shop can see it after accepting
+        String shopUsername = body.get("shopUsername");
+        if (shopUsername != null && !shopUsername.isBlank()) {
+            shopRepository.findByUsername(shopUsername)
+                    .ifPresent(shop -> req.setAssignedShopId(shop.getId()));
+        }
+
         req.setMechanicName(body.get("mechanicName"));
         req.setMechanicPhone(body.get("mechanicPhone"));
         req.setMechanicEta(body.get("estimatedArrival"));
