@@ -650,11 +650,8 @@ function fetchShopRequests() {
             if (req.status === "Pending") {
                 action = `<button class="btn-action btn-acc" onclick="openAcceptPopup(${req.id})">Accept</button>
                           <button class="btn-action btn-rej" onclick="rejectRequest(${req.id})">Reject</button>`;
-            }else if (req.status === "Accepted") {
-                action = `<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-start;">
-                            <button class="btn-action btn-complete" style="width:130px;text-align:center;" onclick="updateStatus(${req.id}, 'Completed')">✅ Mark Complete</button>
-                            <a class="btn-action" style="width:130px;text-align:center;background:linear-gradient(135deg,#8e44ad,#6c3483);color:#fff;text-decoration:none;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;box-shadow:0 2px 8px rgba(142,68,173,0.35);" href="track-view.html?requestId=${req.id}&requester=${encodeURIComponent(sUser)}&role=SHOP" target="_blank">📍 Track Mechanic</a>
-                        </div>`;
+            } else if (req.status === "Accepted") {
+                action = `<button class="btn-action btn-complete" onclick="updateStatus(${req.id}, 'Completed')">Complete</button><a class="btn-action" style="background:#8e44ad;color:#fff;text-decoration:none;padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;" href="track-view.html?requestId=${req.id}&requester=${encodeURIComponent(sUser)}&role=SHOP" target="_blank">Track</a>`;
             }else if (req.status === "Completed") {
                 action = `<button class="btn-action btn-done" disabled>✅ Done</button>`;
             }
