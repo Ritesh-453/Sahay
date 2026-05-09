@@ -100,12 +100,12 @@ public class ShopController {
         return all.stream().filter(req -> {
             String status = req.getStatus();
 
-            // ✅ FIX: Accepted and Completed — show only to the shop that owns it
+            // ✅ Accepted or Completed — show if this shop owns it OR assignedShopId is null
             if ("Accepted".equals(status) || "Completed".equals(status)) {
-                return shopId.equals(req.getAssignedShopId());
+                return req.getAssignedShopId() == null || shopId.equals(req.getAssignedShopId());
             }
 
-            // Only process Pending from here
+            // Pending logic below
             if (!"Pending".equals(status)) return false;
 
             String stage = req.getAssignmentStage();
