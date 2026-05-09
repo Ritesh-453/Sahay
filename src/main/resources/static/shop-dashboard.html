@@ -672,7 +672,7 @@ function confirmAccept() {
     const eta = document.getElementById("mETA").value.trim();
     if (!name || !phone || !eta) { alert("Please fill in all mechanic details!"); return; }
     
-    fetch(API + `/api/requests/${currentRequestId}/accept`, {
+    fetch(API + `/api/shop/requests/${currentRequestId}/accept`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
