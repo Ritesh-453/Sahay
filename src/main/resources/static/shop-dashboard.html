@@ -402,8 +402,12 @@
         <!-- Date Filter -->
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);padding:20px;margin-bottom:28px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
             <div style="display:flex;align-items:center;gap:12px;">
-                <label style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;font-family:var(--font);">Select Date</label>
-                <input type="date" id="reportDate" style="background:var(--bg-void);border:1px solid var(--border);color:var(--text-main);padding:10px 14px;border-radius:var(--radius-sm);font-size:14px;outline:none;color-scheme:dark;">
+                <label style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;font-family:var(--font);">From</label>
+                <input type="date" id="reportFromDate" style="background:var(--bg-void);border:1px solid var(--border);color:var(--text-main);padding:10px 14px;border-radius:var(--radius-sm);font-size:14px;outline:none;color-scheme:dark;">
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;">
+                <label style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;font-family:var(--font);">To</label>
+                <input type="date" id="reportToDate" style="background:var(--bg-void);border:1px solid var(--border);color:var(--text-main);padding:10px 14px;border-radius:var(--radius-sm);font-size:14px;outline:none;color-scheme:dark;">
             </div>
             <button onclick="fetchMyReports()" style="background:linear-gradient(135deg,var(--stripe-purple),var(--stripe-violet));color:white;border:none;padding:10px 20px;border-radius:var(--radius-sm);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font);">Show Reports</button>
             <button onclick="downloadReportsPDF()" style="background:rgba(16,185,129,0.08);color:var(--success);border:1px solid rgba(16,185,129,0.25);padding:10px 20px;border-radius:var(--radius-sm);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font);margin-left:auto;">📄 Download PDF</button>
@@ -885,40 +889,60 @@ function saveProfile() {
 let myCompletedReqs = [];
 
 function fetchMyReports() {
-    const dateVal = document.getElementById("reportDate").value;
+    const fromVal = document.getElementById("reportFromDate").value;
+    const toVal = document.getElementById("reportToDate").value;
+
+    if (fromVal && toVal && fromVal > toVal) {
+        alert("'From' date cannot be after 'To' date.");
+        return;
+    }
+
     fetch(API + "/api/shop/requests?username=" + encodeURIComponent(sUser))
     .then(r => r.json())
     .then(data => {
         let completed = data.filter(r => r.status === "Completed");
-        if (dateVal) {
-            completed = completed.filter(r => {
-                if (!r.createdAt) return false;
-                const reqDate = new Date(r.createdAt + 'Z');
-                const ist = new Date(reqDate.getTime() + 330 * 60000);
-                const yy = ist.getUTCFullYear();
-                const mm = String(ist.getUTCMonth()+1).padStart(2,'0');
-                const dd = String(ist.getUTCDate()).padStart(2,'0');
-                return `${yy}-${mm}-${dd}` === dateVal;
-            });
-        }
+
+        completed = completed.filter(r => {
+            if (!r.createdAt) return false;
+            const reqDate = new Date(r.createdAt + 'Z');
+            const ist = new Date(reqDate.getTime() + 330 * 60000);
+            const yy = ist.getUTCFullYear();
+            const mm = String(ist.getUTCMonth()+1).padStart(2,'0');
+            const dd = String(ist.getUTCDate()).padStart(2,'0');
+            const reqDateStr = `${yy}-${mm}-${dd}`;
+
+            if (fromVal && reqDateStr < fromVal) return false;
+            if (toVal && reqDateStr > toVal) return false;
+            return true;
+        });
+
         myCompletedReqs = completed;
-        renderReports(completed, dateVal);
+        renderReports(completed, fromVal, toVal);
     })
     .catch(() => alert("Failed to load reports."));
 }
 
-function renderReports(data, dateVal) {
+function renderReports(data, fromVal, toVal) {
     const summary = document.getElementById("reportSummary");
     summary.style.display = "block";
     document.getElementById("rCount").innerText = data.length;
-    document.getElementById("rDateLabel").innerText = dateVal
-        ? new Date(dateVal).toLocaleDateString('en-IN', {day:'2-digit', month:'long', year:'numeric'})
-        : "All Time";
+
+    let label = "All Time";
+    if (fromVal && toVal) {
+        const f = new Date(fromVal).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'});
+        const t = new Date(toVal).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'});
+        label = `${f} → ${t}`;
+    } else if (fromVal) {
+        label = "From " + new Date(fromVal).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'});
+    } else if (toVal) {
+        label = "Until " + new Date(toVal).toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'});
+    }
+    document.getElementById("rDateLabel").innerText = label;
 
     const tb = document.getElementById("reportsBody");
     tb.innerHTML = "";
     if (!data.length) {
-        tb.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:40px">No completed requests found for this date.</td></tr>';
+        tb.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:40px">No completed requests found for this period.</td></tr>';
         return;
     }
     data.forEach(req => {
@@ -942,13 +966,15 @@ function downloadReportsPDF() {
     if (!myCompletedReqs.length) { alert("No data to download."); return; }
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF('landscape');
-    const dateVal = document.getElementById("reportDate").value;
+    const fromVal = document.getElementById("reportFromDate").value;
+    const toVal = document.getElementById("reportToDate").value;
+    const dateRange = fromVal && toVal ? `${fromVal} to ${toVal}` : fromVal ? `From ${fromVal}` : toVal ? `Until ${toVal}` : 'All';
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
     doc.text("Sahay - Shop Report", 14, 18);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(11);
-    doc.text(`Shop: ${sName || sUser}   |   Date: ${dateVal || 'All'}   |   Total: ${myCompletedReqs.length}`, 14, 27);
+    doc.text(`Shop: ${sName || sUser}   |   Period: ${dateRange}   |   Total: ${myCompletedReqs.length}`, 14, 27);
     doc.autoTable({
         startY: 33,
         head: [['ID','Customer','Phone','Vehicle','Issue','Mechanic','Mech. Phone','Location','Date & Time']],
@@ -962,7 +988,7 @@ function downloadReportsPDF() {
         headStyles: { fillColor: [99,91,255] },
         styles: { fontSize: 9 }
     });
-    doc.save(`Sahay_Report_${sUser}_${dateVal||'all'}.pdf`);
+    doc.save(`Sahay_Report_${sUser}_${dateRange.replace(/ /g,'_')}.pdf`);
 }
 
 function logout() { localStorage.clear(); window.location.href = "index.html"; }
