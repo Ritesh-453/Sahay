@@ -99,10 +99,15 @@ public class ShopController {
         List<ServiceRequest> all = requestRepository.findAll();
         return all.stream().filter(req -> {
             String status = req.getStatus();
-            // Accepted — only show to shop that accepted it
-            if ("Accepted".equals(status)) return shopId.equals(req.getAssignedShopId());
+
+            // ✅ FIX: Accepted and Completed — show only to the shop that owns it
+            if ("Accepted".equals(status) || "Completed".equals(status)) {
+                return shopId.equals(req.getAssignedShopId());
+            }
+
             // Only process Pending from here
             if (!"Pending".equals(status)) return false;
+
             String stage = req.getAssignmentStage();
             if (stage == null || stage.equals("OPEN")) return true;
             if (stage.equals("ASSIGNED")) return shopId.equals(req.getAssignedShopId());
