@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sahay — Shop Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
@@ -312,9 +311,7 @@
         .popup-field input { width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; background: var(--bg-void); color: var(--text-main); outline: none; transition: all 0.2s; }
         .popup-field input:focus { border-color: var(--stripe-purple); box-shadow: 0 0 0 3px rgba(99,91,255,0.12); }
 
-        .map-label { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
-        #mechanicMap { height: 220px; border-radius: 10px; border: 1px solid var(--border); margin-bottom: 10px; }
-        #mLocDisplay { font-size: 13px; color: var(--success); font-weight: 500; min-height: 20px; margin-bottom: 20px; }
+
 
         .popup-actions { display: flex; gap: 12px; }
         .btn-cancel { flex: 1; padding: 12px; background: transparent; color: var(--text-main); border: 1px solid var(--border); border-radius: 8px; font-weight: 600; cursor: pointer; }
@@ -542,9 +539,7 @@
                 <label>Estimated Arrival Time</label>
                 <input type="text" id="mETA" placeholder="e.g. 30 mins / 4:30 PM">
             </div>
-            <p class="map-label">Click on map to set mechanic's starting location</p>
-            <div id="mechanicMap"></div>
-            <div id="mLocDisplay">No location selected.</div>
+
             <div class="popup-actions">
                 <button class="btn-cancel" onclick="closePopup()">Cancel</button>
                 <button class="btn-confirm" onclick="confirmAccept()">Confirm & Accept</button>
@@ -580,7 +575,6 @@
     </div>
 </div>
 
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 <script>
 const API = window.location.origin;
 const sUser = localStorage.getItem("shopUsername");
@@ -590,10 +584,7 @@ const role = localStorage.getItem("role");
 if (!sUser || role !== "SHOP_OWNER") { alert("Access denied!"); window.location.href = "index.html"; }
 
 let currentRequestId = null;
-let mechanicLat = null;
-let mechanicLng = null;
-let mechanicMapInstance = null;
-let mechanicMarker = null;
+// mechanic map removed - live tracking used instead
 let allRequests = [];
 const starLabels = ["", "Poor", "Fair", "Good", "Very Good", "Excellent"];
 
@@ -641,7 +632,7 @@ function fetchShopRequests() {
             return;
         }
 
-        data.forEach(req => {
+        data.forEach((req, index) => {
             let sc = "bp";
             if (req.status === "Accepted") sc = "ba";
             else if (req.status === "Completed") sc = "bc";
@@ -676,7 +667,7 @@ function fetchShopRequests() {
             }
 
             tb.innerHTML += `<tr>
-                <td style="color:var(--text-muted);font-size:12px;">#${req.id}</td>
+                <td style="color:var(--text-muted);font-size:12px;">#${index + 1}</td>
                 <td class="strong-text">${req.customerName}</td>
                 <td>${req.phone || 'N/A'}</td>
                 <td>${req.vehicleNumber}</td>
@@ -698,26 +689,13 @@ function openAcceptPopup(requestId) {
     document.getElementById("mName").value = "";
     document.getElementById("mPhone").value = "";
     document.getElementById("mETA").value = "";
-    document.getElementById("mLocDisplay").innerText = "No location selected.";
     document.getElementById("acceptOverlay").classList.add("show");
     
-    setTimeout(() => {
-        if (mechanicMapInstance) { mechanicMapInstance.remove(); mechanicMapInstance = null; mechanicMarker = null; }
-        mechanicMapInstance = L.map('mechanicMap').setView([20.5937, 78.9629], 5);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; OpenStreetMap' }).addTo(mechanicMapInstance);
-        
-        mechanicMapInstance.on('click', function(e) {
-            mechanicLat = e.latlng.lat; mechanicLng = e.latlng.lng;
-            if (mechanicMarker) mechanicMapInstance.removeLayer(mechanicMarker);
-            mechanicMarker = L.marker([mechanicLat, mechanicLng]).addTo(mechanicMapInstance).bindPopup("Mechanic Location").openPopup();
-            document.getElementById("mLocDisplay").innerText = mechanicLat.toFixed(4) + ", " + mechanicLng.toFixed(4);
-        });
-    }, 100);
+
 }
 
 function closePopup() {
     document.getElementById("acceptOverlay").classList.remove("show");
-    if (mechanicMapInstance) { mechanicMapInstance.remove(); mechanicMapInstance = null; }
     currentRequestId = null;
 }
 
@@ -944,11 +922,11 @@ function renderReports(data, fromVal, toVal) {
         tb.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:40px">No completed requests found for this period.</td></tr>';
         return;
     }
-    data.forEach(req => {
+    data.forEach((req, index) => {
         const loc = req.latitude ? `${req.latitude.toFixed(4)}, ${req.longitude.toFixed(4)}` : 'N/A';
         const dt = formatIST(req.createdAt);
         tb.innerHTML += `<tr>
-            <td style="color:var(--text-muted);font-size:12px;">#${req.id}</td>
+            <td style="color:var(--text-muted);font-size:12px;">#${index + 1}</td>
             <td class="strong-text">${req.customerName}</td>
             <td>${req.phone || '—'}</td>
             <td>${req.vehicleNumber}</td>

@@ -284,7 +284,11 @@
 <script>
 const API = "https://sahay-n69u.onrender.com";
 const role = localStorage.getItem("role");
-if (!role || role !== "ADMIN") { alert("Access denied!"); window.location.href = "index.html"; }
+const adminUser = localStorage.getItem("adminUsername") || localStorage.getItem("username");
+if (!role || role !== "ADMIN" || !adminUser) { 
+    alert("Access denied! Please log in as admin."); 
+    window.location.href = "index.html"; 
+}
 
 // Set Chart defaults for Dark Theme
 Chart.defaults.color = '#a8b0d8';
