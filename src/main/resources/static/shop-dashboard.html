@@ -397,49 +397,43 @@
         <div class="section-header">
             <h2>My Reports</h2>
             <div class="line"></div>
-            <button onclick="downloadReportsPDF()" style="background:rgba(16,185,129,0.08);color:var(--success);border:1px solid rgba(16,185,129,0.25);padding:10px 20px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;font-family:var(--font);">📄 Download PDF</button>
         </div>
 
-        <!-- Stats Row -->
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:28px;" id="reportStats">
-            <div class="card" style="padding:24px;margin-bottom:0;">
-                <div style="font-size:11px;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">✅ Total Solved</div>
-                <div style="font-size:32px;font-weight:700;font-family:var(--font);" id="rTotal">—</div>
+        <!-- Date Filter -->
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);padding:20px;margin-bottom:28px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <label style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;font-family:var(--font);">Select Date</label>
+                <input type="date" id="reportDate" style="background:var(--bg-void);border:1px solid var(--border);color:var(--text-main);padding:10px 14px;border-radius:var(--radius-sm);font-size:14px;outline:none;color-scheme:dark;">
             </div>
-            <div class="card" style="padding:24px;margin-bottom:0;">
-                <div style="font-size:11px;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">🔧 Mechanics Used</div>
-                <div style="font-size:32px;font-weight:700;font-family:var(--font);" id="rMechanics">—</div>
-            </div>
-            <div class="card" style="padding:24px;margin-bottom:0;">
-                <div style="font-size:11px;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;">🚗 Issue Types</div>
-                <div style="font-size:32px;font-weight:700;font-family:var(--font);" id="rIssueTypes">—</div>
-            </div>
+            <button onclick="fetchMyReports()" style="background:linear-gradient(135deg,var(--stripe-purple),var(--stripe-violet));color:white;border:none;padding:10px 20px;border-radius:var(--radius-sm);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font);">Show Reports</button>
+            <button onclick="downloadReportsPDF()" style="background:rgba(16,185,129,0.08);color:var(--success);border:1px solid rgba(16,185,129,0.25);padding:10px 20px;border-radius:var(--radius-sm);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font);margin-left:auto;">📄 Download PDF</button>
         </div>
 
-        <!-- Chart -->
-        <div class="card" style="padding:24px;margin-bottom:28px;">
-            <div style="font-size:16px;font-weight:600;color:var(--text-main);margin-bottom:20px;font-family:var(--font);">Issues Solved Breakdown</div>
-            <div style="position:relative;height:240px;">
-                <canvas id="shopIssueChart"></canvas>
-            </div>
+        <!-- Summary -->
+        <div id="reportSummary" style="display:none;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px 24px;margin-bottom:20px;font-size:14px;color:var(--text-secondary);">
+            Showing <strong id="rCount" style="color:var(--text-main);">0</strong> completed request(s) for <strong id="rDateLabel" style="color:var(--stripe-purple-bright);"></strong>
         </div>
 
         <!-- Table -->
         <div class="card">
             <div class="table-wrapper">
-                <table id="reportsTable">
+                <table id="reportsTable" style="min-width:900px;">
                     <thead>
                         <tr>
                             <th>ID</th>
                             <th>Customer</th>
+                            <th>Phone</th>
                             <th>Vehicle</th>
                             <th>Issue</th>
                             <th>Mechanic Name</th>
+                            <th>Mechanic Phone</th>
                             <th>Location</th>
-                            <th>Completed On</th>
+                            <th>Date & Time</th>
                         </tr>
                     </thead>
-                    <tbody></tbody>
+                    <tbody id="reportsBody">
+                        <tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:40px">Select a date and click "Show Reports".</td></tr>
+                    </tbody>
                 </table>
             </div>
         </div>
@@ -888,59 +882,43 @@ function saveProfile() {
 }
 
 // ---- My Reports Logic ----
-let shopIssueChart = null;
 let myCompletedReqs = [];
 
 function fetchMyReports() {
+    const dateVal = document.getElementById("reportDate").value;
     fetch(API + "/api/shop/requests?username=" + encodeURIComponent(sUser))
     .then(r => r.json())
     .then(data => {
-        myCompletedReqs = data.filter(r => r.status === "Completed");
-        renderReports(myCompletedReqs);
+        let completed = data.filter(r => r.status === "Completed");
+        if (dateVal) {
+            completed = completed.filter(r => {
+                if (!r.createdAt) return false;
+                const reqDate = new Date(r.createdAt + 'Z');
+                const ist = new Date(reqDate.getTime() + 330 * 60000);
+                const yy = ist.getUTCFullYear();
+                const mm = String(ist.getUTCMonth()+1).padStart(2,'0');
+                const dd = String(ist.getUTCDate()).padStart(2,'0');
+                return `${yy}-${mm}-${dd}` === dateVal;
+            });
+        }
+        myCompletedReqs = completed;
+        renderReports(completed, dateVal);
     })
     .catch(() => alert("Failed to load reports."));
 }
 
-function renderReports(data) {
-    // Stats
-    const mechanics = new Set(data.map(r => r.mechanicName).filter(Boolean));
-    const issueTypes = new Set(data.map(r => r.issue).filter(Boolean));
-    document.getElementById("rTotal").innerText = data.length;
-    document.getElementById("rMechanics").innerText = mechanics.size;
-    document.getElementById("rIssueTypes").innerText = issueTypes.size;
+function renderReports(data, dateVal) {
+    const summary = document.getElementById("reportSummary");
+    summary.style.display = "block";
+    document.getElementById("rCount").innerText = data.length;
+    document.getElementById("rDateLabel").innerText = dateVal
+        ? new Date(dateVal).toLocaleDateString('en-IN', {day:'2-digit', month:'long', year:'numeric'})
+        : "All Time";
 
-    // Chart
-    const issueCounts = {};
-    data.forEach(r => { if(r.issue) issueCounts[r.issue] = (issueCounts[r.issue] || 0) + 1; });
-    const ctx = document.getElementById('shopIssueChart').getContext('2d');
-    if (shopIssueChart) shopIssueChart.destroy();
-    Chart.defaults.color = '#a8b0d8';
-    shopIssueChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: Object.keys(issueCounts),
-            datasets: [{
-                label: 'Issues Solved',
-                data: Object.values(issueCounts),
-                backgroundColor: ['#635bff','#10b981','#f59e0b','#06b6d4','#f43f5e','#7c3aed','#059669','#3b82f6'],
-                borderRadius: 6, borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-                y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.08)' }, ticks: { stepSize: 1 } },
-                x: { grid: { display: false } }
-            }
-        }
-    });
-
-    // Table
-    const tb = document.querySelector("#reportsTable tbody");
+    const tb = document.getElementById("reportsBody");
     tb.innerHTML = "";
     if (!data.length) {
-        tb.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:40px">No completed requests yet.</td></tr>';
+        tb.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:40px">No completed requests found for this date.</td></tr>';
         return;
     }
     data.forEach(req => {
@@ -949,9 +927,11 @@ function renderReports(data) {
         tb.innerHTML += `<tr>
             <td style="color:var(--text-muted);font-size:12px;">#${req.id}</td>
             <td class="strong-text">${req.customerName}</td>
+            <td>${req.phone || '—'}</td>
             <td>${req.vehicleNumber}</td>
             <td>${req.issue}</td>
             <td>${req.mechanicName || '—'}</td>
+            <td>${req.mechanicPhone || '—'}</td>
             <td style="color:var(--text-muted)">${loc}</td>
             <td style="color:var(--text-muted)">${dt}</td>
         </tr>`;
@@ -959,27 +939,30 @@ function renderReports(data) {
 }
 
 function downloadReportsPDF() {
+    if (!myCompletedReqs.length) { alert("No data to download."); return; }
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
+    const doc = new jsPDF('landscape');
+    const dateVal = document.getElementById("reportDate").value;
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(18);
-    doc.text("Sahay - My Shop Report", 14, 20);
+    doc.setFontSize(16);
+    doc.text("Sahay - Shop Report", 14, 18);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(11);
-    doc.text(`Shop: ${sName || sUser}   |   Total Completed: ${myCompletedReqs.length}`, 14, 30);
+    doc.text(`Shop: ${sName || sUser}   |   Date: ${dateVal || 'All'}   |   Total: ${myCompletedReqs.length}`, 14, 27);
     doc.autoTable({
-        startY: 38,
-        head: [['ID', 'Customer', 'Vehicle', 'Issue', 'Mechanic', 'Location', 'Date']],
+        startY: 33,
+        head: [['ID','Customer','Phone','Vehicle','Issue','Mechanic','Mech. Phone','Location','Date & Time']],
         body: myCompletedReqs.map(r => [
-            '#' + r.id, r.customerName, r.vehicleNumber, r.issue,
-            r.mechanicName || '—',
+            '#'+r.id, r.customerName, r.phone||'—', r.vehicleNumber, r.issue,
+            r.mechanicName||'—', r.mechanicPhone||'—',
             r.latitude ? `${r.latitude.toFixed(4)}, ${r.longitude.toFixed(4)}` : 'N/A',
             formatIST(r.createdAt)
         ]),
         theme: 'striped',
-        headStyles: { fillColor: [99, 91, 255] }
+        headStyles: { fillColor: [99,91,255] },
+        styles: { fontSize: 9 }
     });
-    doc.save(`Sahay_Report_${sUser}.pdf`);
+    doc.save(`Sahay_Report_${sUser}_${dateVal||'all'}.pdf`);
 }
 
 function logout() { localStorage.clear(); window.location.href = "index.html"; }
