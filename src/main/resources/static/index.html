@@ -1137,72 +1137,20 @@ function updateNetworkBadge() {
 
 function initShopMap() {
   shopMap = L.map('shopMap', { preferCanvas: true }).setView([20.5937, 78.9629], 5);
-  // Offline-resilient tile layer: uses localStorage tile cache, falls back to placeholder
-  const TILE_CACHE_KEY = 'sahay_tile_cache';
-  let tileCache = {};
-  try { tileCache = JSON.parse(localStorage.getItem(TILE_CACHE_KEY) || '{}'); } catch(e) {}
-
-  const offlinePlaceholder = 'data:image/svg+xml;base64,' + btoa(
-    '<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256">' +
-    '<rect width="256" height="256" fill="#1a1a2e"/>' +
-    '<text x="128" y="120" text-anchor="middle" fill="#444" font-size="13" font-family="Arial">No Map</text>' +
-    '<text x="128" y="140" text-anchor="middle" fill="#444" font-size="11" font-family="Arial">Connect once to cache</text>' +
-    '</svg>'
-  );
-
-  const osmLayer = L.TileLayer.extend({
-    createTile: function(coords, done) {
-      const tile = document.createElement('img');
-      const url = L.Util.template('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        s: ['a','b','c'][Math.abs(coords.x + coords.y + coords.z) % 3],
-        x: coords.x, y: coords.y, z: coords.z
-      });
-      const cacheKey = coords.z + '_' + coords.x + '_' + coords.y;
-
-      tile.onload = function() {
-        // Cache tile as data URL
-        try {
-          const cvs = document.createElement('canvas');
-          cvs.width = cvs.height = 256;
-          const ctx = cvs.getContext('2d');
-          ctx.drawImage(tile, 0, 0);
-          tileCache[cacheKey] = cvs.toDataURL('image/jpeg', 0.7);
-          if (Object.keys(tileCache).length > 500) { // limit cache size
-            const firstKey = Object.keys(tileCache)[0];
-            delete tileCache[firstKey];
-          }
-          localStorage.setItem(TILE_CACHE_KEY, JSON.stringify(tileCache));
-        } catch(e) {}
-        done(null, tile);
-      };
-      tile.onerror = function() {
-        // Try local cache first
-        if (tileCache[cacheKey]) {
-          tile.src = tileCache[cacheKey];
-          done(null, tile);
-        } else {
-          tile.src = offlinePlaceholder;
-          done(null, tile);
-        }
-      };
-
-      // Check cache before fetching
-      if (tileCache[cacheKey] && !navigator.onLine) {
-        tile.src = tileCache[cacheKey];
-        done(null, tile);
-      } else {
-        tile.crossOrigin = 'anonymous';
-        tile.src = url;
-      }
-      return tile;
-    }
+  // Simple tile layer — works online; shows placeholder when offline
+  const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    maxZoom: 19
   });
-
-  const tileLayerInstance = new osmLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap', maxZoom: 19
+  osmLayer.on('tileerror', function(e) {
+    e.tile.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256">' +
+      '<rect width="256" height="256" fill="#1a1a2e"/>' +
+      '<text x="128" y="128" text-anchor="middle" fill="#555" font-size="12" font-family="Arial">Offline</text>' +
+      '</svg>'
+    );
   });
-  tileLayerInstance.addTo(shopMap);
-  const osmLayerRef = tileLayerInstance; // keep reference for compatibility
+  osmLayer.addTo(shopMap);
   setTimeout(() => { shopMap.invalidateSize(true); }, 300);
   setTimeout(() => { shopMap.invalidateSize(true); }, 800);
   setTimeout(() => { shopMap.invalidateSize(true); }, 1500);
