@@ -104,10 +104,13 @@ public class ServiceRequestController {
         req.setStatus("Accepted");
 
         // ✅ FIX: set assignedShopId so the shop can see it after accepting
+        // RELIABLE - explicit null check outside lambda
         String shopUsername = body.get("shopUsername");
         if (shopUsername != null && !shopUsername.isBlank()) {
-            shopRepository.findByUsername(shopUsername)
-                    .ifPresent(shop -> req.setAssignedShopId(shop.getId()));
+            Optional<Shop> shopOpt = shopRepository.findByUsername(shopUsername);
+            if (shopOpt.isPresent()) {
+                req.setAssignedShopId(shopOpt.get().getId());
+            }
         }
 
         req.setMechanicName(body.get("mechanicName"));
