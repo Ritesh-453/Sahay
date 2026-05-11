@@ -1,6 +1,5 @@
+cat > README.md << 'ENDOFREADME'
 <div align="center">
-
-<img src="https://github.com/Ritesh-453/Sahay/blob/main/src/main/resources/static/assets/logo.png" alt="Sahay Logo" width="80"/>
 
 # Sahay — Smart Roadside Assistance
 
@@ -25,9 +24,6 @@ The intelligent platform connecting stranded drivers with professional mechanics
 
 ### 👤 Customer Dashboard
 ![Customer Dashboard](src/main/resources/static/assets/screenshots/customer.png)
-
-### 🗺️ Nearby Shops Map
-![Shops Map](src/main/resources/static/assets/screenshots/map.png)
 
 ### 🤖 Sevak — Offline Chatbot
 ![Sevak](src/main/resources/static/assets/screenshots/sevak.png)
@@ -98,43 +94,43 @@ The intelligent platform connecting stranded drivers with professional mechanics
 ### Steps
 
 **1. Clone the repository**
-```bash
+\`\`\`bash
 git clone https://github.com/Ritesh-453/Sahay.git
 cd Sahay
-```
+\`\`\`
 
 **2. Set up the database**
-```sql
+\`\`\`sql
 CREATE DATABASE RoadAssistDB;
-```
+\`\`\`
 
 **3. Configure environment variables**
 
-Create a `.env` file or set these in your environment:
-```env
+Create a \`.env\` file or set these in your environment:
+\`\`\`env
 DB_URL=jdbc:mysql://localhost:3306/RoadAssistDB
 DB_USERNAME=root
 DB_PASSWORD=your_password
 MAIL_USERNAME=your_email@gmail.com
 MAIL_PASSWORD=your_app_password
 PORT=8082
-```
+\`\`\`
 
 **4. Run the application**
-```bash
+\`\`\`bash
 mvn spring-boot:run
-```
+\`\`\`
 
 **5. Open in browser**
-```
+\`\`\`
 https://sahay-n69u.onrender.com
-```
+\`\`\`
 
 ---
 
 ## 🐳 Run with Docker
 
-```bash
+\`\`\`bash
 docker build -t sahay .
 docker run -p 8082:8082 \
   -e DB_URL=jdbc:mysql://your-db-host:3306/RoadAssistDB \
@@ -143,13 +139,13 @@ docker run -p 8082:8082 \
   -e MAIL_USERNAME=your_email \
   -e MAIL_PASSWORD=your_app_password \
   sahay
-```
+\`\`\`
 
 ---
 
 ## 📁 Project Structure
 
-```
+\`\`\`
 src/
 ├── main/
 │   ├── java/com/example/breakdown/
@@ -170,7 +166,7 @@ src/
 │       └── application.properties
 ├── Dockerfile
 └── pom.xml
-```
+\`\`\`
 
 ---
 
@@ -184,3 +180,5 @@ The app is deployed on **Render** (Docker runtime) with **Clever Cloud MySQL** a
 > ⚠️ Free tier on Render spins down after inactivity — first request may take 50+ seconds.
 
 ---
+
+
