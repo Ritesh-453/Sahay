@@ -52,12 +52,13 @@ The intelligent platform connecting stranded drivers with professional mechanics
 - Receive and manage incoming breakdown requests
 - Accept / complete / reject customer requests
 - Email notifications on new requests
+- Filter by date range & download PDF reports of owned shop
 
 ### 🛡️ Admin
 - View and manage all service requests
 - Manage registered shops
 - Analytics dashboard — total requests, pending, accepted, completed
-- Filter by date range & download PDF reports
+- Filter by date range & download PDF reports of all shops
 - Live tracking of mechanic
 
 ### 🤖 Sevak (Offline Chatbot)
