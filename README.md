@@ -1,4 +1,4 @@
-cat > README.md << 'ENDOFREADME'
+
 <div align="center">
 
 # Sahay — Smart Roadside Assistance
