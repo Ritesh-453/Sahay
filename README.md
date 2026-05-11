@@ -44,6 +44,7 @@ The intelligent platform connecting stranded drivers with professional mechanics
 - Upload vehicle photo (optional)
 - Track request status in real-time
 - View nearby mechanic shops on an interactive map (Leaflet + OpenStreetMap)
+- Live tracking of mechanic
 - **Sevak** — offline 24×7 chatbot for 50+ roadside problems
 
 ### 🔧 Mechanic Shop
@@ -57,6 +58,7 @@ The intelligent platform connecting stranded drivers with professional mechanics
 - Manage registered shops
 - Analytics dashboard — total requests, pending, accepted, completed
 - Filter by date range & download PDF reports
+- Live tracking of mechanic
 
 ### 🤖 Sevak (Offline Chatbot)
 - Works 100% offline — no internet needed
