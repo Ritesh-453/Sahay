@@ -20,6 +20,9 @@ public class SecurityConfig {
         http.csrf().disable()
             .authorizeHttpRequests()
             .requestMatchers("/api/auth/**").permitAll()  // login & register are public
+            .requestMatchers("/", "/index.html", "/*.html", 
+                     "/css/**", "/js/**", 
+                     "/assets/**").permitAll()
             .anyRequest().authenticated()                  // everything else needs token
             .and()
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
