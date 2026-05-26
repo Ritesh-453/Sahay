@@ -19,11 +19,14 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf().disable()
             .authorizeHttpRequests()
-            .requestMatchers("/api/auth/**").permitAll()  // login & register are public
-            .requestMatchers("/", "/index.html", "/*.html", 
-                     "/css/**", "/js/**", 
-                     "/assets/**").permitAll()
-            .anyRequest().authenticated()                  // everything else needs token
+            // Auth endpoints
+            .requestMatchers("/api/auth/**").permitAll()
+            // Static files
+            .requestMatchers("/", "/*.html", "/css/**", "/js/**", "/assets/**", "/static/**").permitAll()
+            // All API endpoints used by frontend
+            .requestMatchers("/api/requests/**").permitAll()
+            .requestMatchers("/api/shop/**").permitAll()
+            .anyRequest().authenticated()
             .and()
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
