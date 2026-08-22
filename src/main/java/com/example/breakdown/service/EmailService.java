@@ -36,8 +36,10 @@ public class EmailService {
 
             System.out.println(">>> Email sent successfully to " + to);
 
-        } catch (ResendException e) {
-            System.err.println("Failed to send email to " + to + ": " + e.getMessage());
+        } catch (Exception e) {
+            // DO NOT stop the service request if email fails
+            System.err.println(">>> Email failed to " + to);
+            System.err.println(">>> Reason: " + e.getMessage());
         }
     }
 
