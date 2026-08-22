@@ -874,7 +874,7 @@
     </div>
 
 <script>
-const API = "https://sahay-n69u.onrender.com";
+const API = "";
 
 function show(id) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -1061,8 +1061,12 @@ function doShopRegister() {
         const address = document.getElementById('bAddr_' + idx)?.value.trim();
         const lat = document.getElementById('bLat_' + idx)?.value;
         const lng = document.getElementById('bLng_' + idx)?.value;
-        if (name) branches.push({ name, address: address || '', lat: lat || null, lng: lng || null });
+        if (name && lat && lng) branches.push({ name, address: address || '', lat: lat || null, lng: lng || null });
     });
+
+    if (branches.length === 0) {
+        setMsg('srMsg', 'At least one branch location with Latitude and Longitude is required.', 'err'); return;
+    }
 
     const payload = { shopName, ownerName, phone, email, openingTime, closingTime, username, password, branchesJson: JSON.stringify(branches) };
 
@@ -1109,6 +1113,33 @@ window.addEventListener('load',    applyNetworkMode);
 window.addEventListener('online',  applyNetworkMode);
 window.addEventListener('offline', applyNetworkMode);
 // ────────────────────────────────────────────────────────
+
+// ==== Branch Management Functions ====
+let branchCounter = 0;
+function addBranch() {
+    const container = document.getElementById('branchList');
+    const idx = branchCounter++;
+    const div = document.createElement('div');
+    div.id = `branch_${idx}`;
+    div.style.marginBottom = '8px';
+    div.innerHTML = `
+        <input type="text" id="bName_${idx}" class="input-field" placeholder="Branch Name" style="margin-bottom:4px;" />
+        <input type="text" id="bAddr_${idx}" class="input-field" placeholder="Address (optional)" style="margin-bottom:4px;" />
+        <div style="display:flex;gap:4px;">
+            <input type="number" step="any" id="bLat_${idx}" class="input-field" placeholder="Latitude" style="flex:1;" />
+            <input type="number" step="any" id="bLng_${idx}" class="input-field" placeholder="Longitude" style="flex:1;" />
+        </div>
+        <button type="button" class="btn btn-small" onclick="removeBranch(${idx})" style="margin-top:4px;">Remove</button>
+        <hr/>
+    `;
+    container.appendChild(div);
+}
+
+function removeBranch(idx) {
+    const el = document.getElementById(`branch_${idx}`);
+    if (el) el.remove();
+}
+
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>

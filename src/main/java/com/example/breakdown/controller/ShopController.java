@@ -5,6 +5,7 @@ import com.example.breakdown.model.Shop;
 import com.example.breakdown.repository.ServiceRequestRepository;
 import com.example.breakdown.repository.ShopRepository;
 import com.example.breakdown.service.EmailService;
+import com.example.breakdown.service.ShopService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,16 +24,19 @@ public class ShopController {
     private final ServiceRequestRepository requestRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final ShopService shopService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public ShopController(ShopRepository shopRepository,
                           ServiceRequestRepository requestRepository,
                           PasswordEncoder passwordEncoder,
-                          EmailService emailService) {
+                          EmailService emailService,
+                          ShopService shopService) {
         this.shopRepository = shopRepository;
         this.requestRepository = requestRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
+        this.shopService = shopService;
     }
 
     @PostMapping("/register")
@@ -48,6 +52,9 @@ public class ShopController {
             return ResponseEntity.badRequest().body("Owner name is required.");
         if (shop.getPhone() == null || shop.getPhone().isBlank())
             return ResponseEntity.badRequest().body("Phone number is required.");
+        // Enforce that the shop provides at least one valid branch location (lat/lng)
+        if (!isValidLocation(shop.getBranchesJson()))
+            return ResponseEntity.badRequest().body("At least one valid branch location (lat/lng) is required.");
         shop.setPassword(passwordEncoder.encode(shop.getPassword()));
         shop.setRole("SHOP_OWNER");
         shopRepository.save(shop);
@@ -79,7 +86,11 @@ public class ShopController {
                     if (updated.getPhone() != null) shop.setPhone(updated.getPhone());
                     if (updated.getOpeningTime() != null) shop.setOpeningTime(updated.getOpeningTime());
                     if (updated.getClosingTime() != null) shop.setClosingTime(updated.getClosingTime());
-                    if (updated.getBranchesJson() != null) shop.setBranchesJson(updated.getBranchesJson());
+                    if (updated.getBranchesJson() != null) {
+                        if (!isValidLocation(updated.getBranchesJson()))
+                            return ResponseEntity.badRequest().body("At least one valid branch location (lat/lng) is required.");
+                        shop.setBranchesJson(updated.getBranchesJson());
+                    }
                     shopRepository.save(shop);
                     shop.setPassword(null);
                     return ResponseEntity.ok(shop);
@@ -115,7 +126,7 @@ public class ShopController {
                 List<Long> rejected = parseRejectedIds(req.getRejectedShopIds());
                 if (rejected.contains(shopId)) return false;
                 if (req.getLatitude() == null || req.getLongitude() == null) return true;
-                double dist = getShopMinDistance(shop, req.getLatitude(), req.getLongitude());
+                double dist = shopService.getShopMinDistance(shop, req.getLatitude(), req.getLongitude());
                 return dist <= 200.0;
             }
             return false;
@@ -164,10 +175,12 @@ public class ShopController {
         // Always try to find next shop regardless of how many have rejected
         double lat = req.getLatitude() != null ? req.getLatitude() : 0.0;
         double lng = req.getLongitude() != null ? req.getLongitude() : 0.0;
-        Shop nextShop = findNearestOpenShop(allShops, lat, lng, rejected);
+        Shop nextShop = shopService.findNearestOpenShop(allShops, lat, lng, rejected);
         if (nextShop != null) {
             req.setAssignedShopId(nextShop.getId());
             req.setAssignmentStage("ASSIGNED");
+            req.setLastAssignedAt(java.time.LocalDateTime.now());
+            req.setAdminNotified(false);
             requestRepository.save(req);
             emailService.sendReassignedNotification(nextShop, req);
             return ResponseEntity.ok(req);
@@ -184,8 +197,8 @@ public class ShopController {
         if ("BROADCAST".equals(req.getAssignmentStage()) && req.getLatitude() != null) {
             for (Shop shop : allShops) {
                 if (rejected.contains(shop.getId())) continue;
-                if (!isShopOpen(shop)) continue;
-                double dist = getShopMinDistance(shop, req.getLatitude(), req.getLongitude());
+                if (!shopService.isShopOpen(shop)) continue;
+                double dist = shopService.getShopMinDistance(shop, req.getLatitude(), req.getLongitude());
                 if (dist <= 50.0) {
                     emailService.sendBroadcastNotification(shop, req);
                 }
@@ -239,8 +252,8 @@ public class ShopController {
             info.put("openingTime", shop.getOpeningTime());
             info.put("closingTime", shop.getClosingTime());
             info.put("branchesJson", shop.getBranchesJson());
-            info.put("isOpen", isShopOpen(shop));
-            info.put("distanceKm", getShopMinDistance(shop, lat, lng));
+            info.put("isOpen", shopService.isShopOpen(shop));
+            info.put("distanceKm", shopService.getShopMinDistance(shop, lat, lng));
             info.put("serverTime", java.time.LocalTime.now().toString());
             result.put(shop.getUsername(), info);
         }
@@ -249,71 +262,35 @@ public class ShopController {
 
     // ========== HELPERS ==========
 
-    private Shop findNearestOpenShop(List<Shop> shops, double lat, double lng, List<Long> excludeIds) {
-        Shop nearest = null;
-        double minDist = Double.MAX_VALUE;
-        for (Shop shop : shops) {
-            if (excludeIds.contains(shop.getId())) continue;
-            if (!isShopOpen(shop)) continue;
-            double dist = getShopMinDistance(shop, lat, lng);
-            if (dist < minDist) { minDist = dist; nearest = shop; }
-        }
-        return nearest;
-    }
-
-    private boolean isShopOpen(Shop shop) {
-        if (shop.getOpeningTime() == null || shop.getClosingTime() == null) return true;
-        try {
-            String openStr = shop.getOpeningTime().trim();
-            String closeStr = shop.getClosingTime().trim();
-            if (openStr.length() > 5) openStr = openStr.substring(0, 5);
-            if (closeStr.length() > 5) closeStr = closeStr.substring(0, 5);
-            LocalTime now = LocalTime.now(java.time.ZoneId.of("Asia/Kolkata"));
-            LocalTime open = LocalTime.parse(openStr);
-            LocalTime close = LocalTime.parse(closeStr);
-            return !now.isBefore(open) && !now.isAfter(close);
-        } catch (Exception e) { return true; }
-    }
-
-    private double getShopMinDistance(Shop shop, double lat, double lng) {
-        if (shop.getBranchesJson() == null || shop.getBranchesJson().isBlank()) return Double.MAX_VALUE;
-        try {
-            List<Map<String, Object>> branches = objectMapper.readValue(shop.getBranchesJson(), List.class);
-            double minDist = Double.MAX_VALUE;
-            boolean anyValidBranch = false;
-            for (Map<String, Object> branch : branches) {
-                Object latObj = branch.get("lat");
-                Object lngObj = branch.get("lng");
-                if (latObj == null || lngObj == null) continue;
-                String latStr = latObj.toString().trim();
-                String lngStr = lngObj.toString().trim();
-                if (latStr.isEmpty() || lngStr.isEmpty()) continue;
-                double bLat = Double.parseDouble(latStr);
-                double bLng = Double.parseDouble(lngStr);
-                if (bLat == 0.0 && bLng == 0.0) continue;
-                anyValidBranch = true;
-                double dist = haversine(lat, lng, bLat, bLng);
-                if (dist < minDist) minDist = dist;
-            }
-            return anyValidBranch ? minDist : Double.MAX_VALUE;
-        } catch (Exception e) { return Double.MAX_VALUE; }
-    }
-
-    private double haversine(double lat1, double lon1, double lat2, double lon2) {
-        final int R = 6371;
-        double dLat = Math.toRadians(lat2 - lat1);
-        double dLon = Math.toRadians(lon2 - lon1);
-        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
-                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
-                * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    }
-
     private List<Long> parseRejectedIds(String csv) {
         if (csv == null || csv.isBlank()) return new ArrayList<>();
         return Arrays.stream(csv.split(","))
                 .filter(s -> !s.isBlank())
                 .map(Long::parseLong)
                 .collect(Collectors.toList());
+    }
+    // Helper method to validate that branchesJson contains at least one branch with valid latitude and longitude
+    private boolean isValidLocation(String branchesJson) {
+        if (branchesJson == null || branchesJson.isBlank()) return false;
+        try {
+            // Parse JSON array of branch objects
+            List<Map<String, Object>> branches = objectMapper.readValue(branchesJson, new com.fasterxml.jackson.core.type.TypeReference<List<Map<String, Object>>>() {});
+            for (Map<String, Object> branch : branches) {
+                Object latObj = branch.get("lat");
+                Object lngObj = branch.get("lng");
+                if (latObj instanceof Number && lngObj instanceof Number) {
+                    double lat = ((Number) latObj).doubleValue();
+                    double lng = ((Number) lngObj).doubleValue();
+                    // Basic sanity check: lat in [-90,90], lng in [-180,180]
+                    if (lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+                        return true;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // Parsing failed – treat as invalid
+            return false;
+        }
+        return false;
     }
 }

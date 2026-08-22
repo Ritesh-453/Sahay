@@ -6,6 +6,7 @@ import com.example.breakdown.repository.ServiceRequestRepository;
 import com.example.breakdown.repository.ShopRepository;
 import com.example.breakdown.service.EmailService;
 import com.example.breakdown.service.ServiceRequestService;
+import com.example.breakdown.service.ShopService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -25,16 +26,19 @@ public class ServiceRequestController {
     private final ShopRepository shopRepository;
     private final ServiceRequestService service;
     private final EmailService emailService;
+    private final ShopService shopService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public ServiceRequestController(ServiceRequestRepository requestRepository,
                                     ShopRepository shopRepository,
                                     ServiceRequestService service,
-                                    EmailService emailService) {
+                                    EmailService emailService,
+                                    ShopService shopService) {
         this.requestRepository = requestRepository;
         this.shopRepository = shopRepository;
         this.service = service;
         this.emailService = emailService;
+        this.shopService = shopService;
     }
 
     @GetMapping
@@ -61,11 +65,11 @@ public class ServiceRequestController {
             System.out.println("Total shops: " + allShops.size());
             for (Shop s : allShops) {
                 System.out.println("Shop: " + s.getUsername()
-                    + " | open: " + isShopOpen(s)
-                    + " | dist: " + getShopMinDistance(s, request.getLatitude(), request.getLongitude()));
+                    + " | open: " + shopService.isShopOpen(s)
+                    + " | dist: " + shopService.getShopMinDistance(s, request.getLatitude(), request.getLongitude()));
             }
 
-            Shop nearest = findNearestOpenShop(allShops, request.getLatitude(), request.getLongitude(), new ArrayList<>());
+            Shop nearest = shopService.findNearestOpenShop(allShops, request.getLatitude(), request.getLongitude(), new ArrayList<>());
             System.out.println("Nearest: " + (nearest != null ? nearest.getUsername() : "NULL"));
 
             if (nearest != null) {
@@ -123,6 +127,148 @@ public class ServiceRequestController {
         return requestRepository.save(req);
     }
 
+    @PatchMapping("/{id}/reject")
+    public ServiceRequest rejectRequest(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body) {
+
+        ServiceRequest req = requestRepository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException("Request not found"));
+
+        String shopUsername = body.get("shopUsername");
+
+        if (shopUsername == null || shopUsername.isBlank()) {
+            throw new RuntimeException("Shop username is required");
+        }
+
+        Shop rejectingShop = shopRepository
+                .findByUsername(shopUsername)
+                .orElseThrow(() ->
+                        new RuntimeException("Shop not found"));
+
+        // ---------------------------------
+        // Add current shop to rejected list
+        // ---------------------------------
+
+        List<Long> rejectedIds = new ArrayList<>();
+
+        if (req.getRejectedShopIds() != null &&
+                !req.getRejectedShopIds().isBlank()) {
+
+            rejectedIds = Arrays.stream(
+                            req.getRejectedShopIds().split(","))
+                    .filter(s -> !s.isBlank())
+                    .map(Long::parseLong)
+                    .collect(Collectors.toList());
+        }
+
+        if (!rejectedIds.contains(rejectingShop.getId())) {
+            rejectedIds.add(rejectingShop.getId());
+        }
+
+        req.setRejectedShopIds(
+                rejectedIds.stream()
+                        .map(String::valueOf)
+                        .collect(Collectors.joining(","))
+        );
+
+        // ---------------------------------
+        // Find next nearest eligible shop
+        // ---------------------------------
+
+        List<Shop> allShops = shopRepository.findAll();
+
+        Shop nextShop = shopService.findNearestOpenShop(
+                allShops,
+                req.getLatitude(),
+                req.getLongitude(),
+                rejectedIds
+        );
+
+        if (nextShop != null) {
+
+            // Assign request to next shop
+            req.setAssignedShopId(nextShop.getId());
+            req.setAssignmentStage("ASSIGNED");
+            req.setLastAssignedAt(LocalDateTime.now());
+
+            ServiceRequest saved =
+                    requestRepository.save(req);
+
+            // Send email to next shop
+            emailService.sendReassignedNotification(
+                    nextShop,
+                    saved
+            );
+
+            System.out.println(
+                    ">>> Request " + saved.getId()
+                            + " reassigned to "
+                            + nextShop.getUsername()
+            );
+
+            return saved;
+        }
+
+        // ---------------------------------
+        // No more individual shops available
+        // Broadcast to remaining shops
+        // ---------------------------------
+
+        final List<Long> finalRejectedIds = rejectedIds;
+
+        List<Shop> broadcastShops = allShops.stream()
+                .filter(shop -> !finalRejectedIds.contains(shop.getId()))
+                .filter(shop -> shopService.isShopOpen(shop))
+                .collect(Collectors.toList());
+
+        if (!broadcastShops.isEmpty()) {
+
+            req.setAssignedShopId(null);
+            req.setAssignmentStage("BROADCAST");
+            req.setLastAssignedAt(LocalDateTime.now());
+
+            ServiceRequest saved =
+                    requestRepository.save(req);
+
+            // Send email to every broadcast shop
+            for (Shop shop : broadcastShops) {
+
+                emailService.sendBroadcastNotification(
+                        shop,
+                        saved
+                );
+
+                System.out.println(
+                        ">>> Broadcast email sent to "
+                                + shop.getEmail()
+                );
+            }
+
+            return saved;
+        }
+
+        // ---------------------------------
+        // Nobody remains -> notify admin
+        // ---------------------------------
+
+        req.setAssignedShopId(null);
+        req.setAssignmentStage("OPEN");
+        req.setAdminNotified(true);
+
+        ServiceRequest saved =
+                requestRepository.save(req);
+
+        emailService.sendAdminNotification(saved);
+
+        System.out.println(
+                ">>> All shops rejected. Admin notified."
+        );
+
+        return saved;
+    }
+
     @PatchMapping("/{id}/review")
     public ServiceRequest submitReview(@PathVariable Long id, @RequestBody ServiceRequest body) {
         ServiceRequest req = requestRepository.findById(id)
@@ -154,68 +300,5 @@ public class ServiceRequestController {
     }
 
     // ========== SHARED HELPERS ==========
-
-    public Shop findNearestOpenShop(List<Shop> shops, double lat, double lng, List<Long> excludeIds) {
-        Shop nearest = null;
-        double minDist = Double.MAX_VALUE;
-        for (Shop shop : shops) {
-            if (excludeIds.contains(shop.getId())) continue;
-            if (!isShopOpen(shop)) continue;
-            double dist = getShopMinDistance(shop, lat, lng);
-            if (dist < minDist) { minDist = dist; nearest = shop; }
-        }
-        return nearest;
-    }
-
-    public boolean isShopOpen(Shop shop) {
-        if (shop.getOpeningTime() == null || shop.getClosingTime() == null) return true;
-        try {
-            String openStr = shop.getOpeningTime().trim();
-            String closeStr = shop.getClosingTime().trim();
-            if (openStr.length() > 5) openStr = openStr.substring(0, 5);
-            if (closeStr.length() > 5) closeStr = closeStr.substring(0, 5);
-            LocalTime now = LocalTime.now(java.time.ZoneId.of("Asia/Kolkata"));
-            LocalTime open = LocalTime.parse(openStr);
-            LocalTime close = LocalTime.parse(closeStr);
-            return !now.isBefore(open) && !now.isAfter(close);
-        } catch (Exception e) { return true; }
-    }
-
-    public double getShopMinDistance(Shop shop, double lat, double lng) {
-        if (shop.getBranchesJson() == null || shop.getBranchesJson().isBlank()) {
-            // FIX: No branches configured — treat shop as local (distance 0) so it gets assigned
-            return 0.0;
-        }
-        try {
-            List<Map<String, Object>> branches = objectMapper.readValue(shop.getBranchesJson(), List.class);
-            double minDist = Double.MAX_VALUE;
-            boolean anyValidBranch = false;
-            for (Map<String, Object> branch : branches) {
-                Object latObj = branch.get("lat");
-                Object lngObj = branch.get("lng");
-                if (latObj == null || lngObj == null) continue;
-                String latStr = latObj.toString().trim();
-                String lngStr = lngObj.toString().trim();
-                if (latStr.isEmpty() || lngStr.isEmpty()) continue;
-                double bLat = Double.parseDouble(latStr);
-                double bLng = Double.parseDouble(lngStr);
-                if (bLat == 0.0 && bLng == 0.0) continue;
-                anyValidBranch = true;
-                double dist = haversine(lat, lng, bLat, bLng);
-                if (dist < minDist) minDist = dist;
-            }
-            // FIX: If branches exist but none have valid coordinates — treat as local (distance 0)
-            return anyValidBranch ? minDist : 0.0;
-        } catch (Exception e) { return 0.0; }
-    }
-
-    public double haversine(double lat1, double lon1, double lat2, double lon2) {
-        final int R = 6371;
-        double dLat = Math.toRadians(lat2 - lat1);
-        double dLon = Math.toRadians(lon2 - lon1);
-        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
-                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
-                * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    }
+    // Removed because these are now in ShopService
 }

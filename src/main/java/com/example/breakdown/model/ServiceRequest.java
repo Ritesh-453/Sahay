@@ -51,10 +51,15 @@ public class ServiceRequest {
     // "OPEN"       → nobody nearby, all open shops can see it
     private String assignmentStage;
 
+    private LocalDateTime lastAssignedAt;
+    private Boolean adminNotified;
+
     @PrePersist
     public void onCreate() {
         if (this.createdAt == null) this.createdAt = LocalDateTime.now();
         if (this.status == null) this.status = "Pending";
+        if (this.adminNotified == null) this.adminNotified = false;
+        if (this.lastAssignedAt == null) this.lastAssignedAt = LocalDateTime.now();
     }
 
     // Getters & Setters
@@ -116,4 +121,10 @@ public class ServiceRequest {
 
     public String getAssignmentStage() { return assignmentStage; }
     public void setAssignmentStage(String assignmentStage) { this.assignmentStage = assignmentStage; }
+
+    public LocalDateTime getLastAssignedAt() { return lastAssignedAt; }
+    public void setLastAssignedAt(LocalDateTime lastAssignedAt) { this.lastAssignedAt = lastAssignedAt; }
+
+    public Boolean getAdminNotified() { return adminNotified; }
+    public void setAdminNotified(Boolean adminNotified) { this.adminNotified = adminNotified; }
 }
