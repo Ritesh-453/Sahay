@@ -44,6 +44,8 @@ public class ShopService {
             LocalTime now = LocalTime.now(java.time.ZoneId.of("Asia/Kolkata"));
             LocalTime open = LocalTime.parse(openStr);
             LocalTime close = LocalTime.parse(closeStr);
+            // Treat 00:00 closing as midnight (end of day)
+            if (close.equals(LocalTime.MIDNIGHT)) return !now.isBefore(open);
             return !now.isBefore(open) && !now.isAfter(close);
         } catch (Exception e) { 
             return true; 

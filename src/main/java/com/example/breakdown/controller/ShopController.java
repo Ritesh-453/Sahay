@@ -52,7 +52,6 @@ public class ShopController {
             return ResponseEntity.badRequest().body("Owner name is required.");
         if (shop.getPhone() == null || shop.getPhone().isBlank())
             return ResponseEntity.badRequest().body("Phone number is required.");
-        // Enforce that the shop provides at least one valid branch location (lat/lng)
         if (!isValidLocation(shop.getBranchesJson()))
             return ResponseEntity.badRequest().body("At least one valid branch location (lat/lng) is required.");
         shop.setPassword(passwordEncoder.encode(shop.getPassword()));
@@ -111,12 +110,10 @@ public class ShopController {
         return all.stream().filter(req -> {
             String status = req.getStatus();
 
-            // ✅ Accepted or Completed — show if this shop owns it OR assignedShopId is null
             if ("Accepted".equals(status) || "Completed".equals(status)) {
                 return req.getAssignedShopId() == null || shopId.equals(req.getAssignedShopId());
             }
 
-            // Pending logic below
             if (!"Pending".equals(status)) return false;
 
             String stage = req.getAssignmentStage();
@@ -171,10 +168,10 @@ public class ShopController {
         req.setRejectedShopIds(rejected.stream().map(String::valueOf).collect(Collectors.joining(",")));
 
         List<Shop> allShops = shopRepository.findAll();
-
-        // Always try to find next shop regardless of how many have rejected
         double lat = req.getLatitude() != null ? req.getLatitude() : 0.0;
         double lng = req.getLongitude() != null ? req.getLongitude() : 0.0;
+
+        // Step 1: Try to find next nearest shop
         Shop nextShop = shopService.findNearestOpenShop(allShops, lat, lng, rejected);
         if (nextShop != null) {
             req.setAssignedShopId(nextShop.getId());
@@ -184,26 +181,34 @@ public class ShopController {
             requestRepository.save(req);
             emailService.sendReassignedNotification(nextShop, req);
             return ResponseEntity.ok(req);
-        } else {
-            // No more shops available — broadcast to all
+        }
+
+        // Step 2: No next shop — broadcast to remaining open shops
+        final List<Long> finalRejected = rejected;
+        List<Shop> broadcastShops = allShops.stream()
+                .filter(shop -> !finalRejected.contains(shop.getId()))
+                .filter(shop -> shopService.isShopOpen(shop))
+                .collect(Collectors.toList());
+
+        if (!broadcastShops.isEmpty()) {
             req.setAssignedShopId(null);
             req.setAssignmentStage("BROADCAST");
-            System.out.println(">>> ALL SHOPS REJECTED — sending admin email for request ID: " + req.getId());
-            emailService.sendAdminNotification(req);
-        }
-
-        requestRepository.save(req);
-
-        if ("BROADCAST".equals(req.getAssignmentStage()) && req.getLatitude() != null) {
-            for (Shop shop : allShops) {
-                if (rejected.contains(shop.getId())) continue;
-                if (!shopService.isShopOpen(shop)) continue;
-                double dist = shopService.getShopMinDistance(shop, req.getLatitude(), req.getLongitude());
-                if (dist <= 50.0) {
-                    emailService.sendBroadcastNotification(shop, req);
-                }
+            req.setLastAssignedAt(java.time.LocalDateTime.now());
+            requestRepository.save(req);
+            for (Shop shop : broadcastShops) {
+                emailService.sendBroadcastNotification(shop, req);
+                System.out.println(">>> Broadcast email sent to " + shop.getEmail());
             }
+            return ResponseEntity.ok(req);
         }
+
+        // Step 3: Nobody remains — notify admin
+        req.setAssignedShopId(null);
+        req.setAssignmentStage("OPEN");
+        req.setAdminNotified(true);
+        requestRepository.save(req);
+        emailService.sendAdminNotification(req);
+        System.out.println(">>> All shops rejected. Admin notified.");
 
         return ResponseEntity.ok(req);
     }
@@ -216,7 +221,6 @@ public class ShopController {
                     if (!"Pending".equals(req.getStatus()))
                         return ResponseEntity.badRequest().body("Request is no longer pending.");
                     req.setStatus("Accepted");
-                    // Set assignedShopId so the shop can see the request after accepting
                     if (username != null && !username.isBlank()) {
                         shopRepository.findByUsername(username)
                                 .ifPresent(shop -> req.setAssignedShopId(shop.getId()));
@@ -269,11 +273,10 @@ public class ShopController {
                 .map(Long::parseLong)
                 .collect(Collectors.toList());
     }
-    // Helper method to validate that branchesJson contains at least one branch with valid latitude and longitude
+
     private boolean isValidLocation(String branchesJson) {
         if (branchesJson == null || branchesJson.isBlank()) return false;
         try {
-            // Parse JSON array of branch objects
             List<Map<String, Object>> branches = objectMapper.readValue(branchesJson, new com.fasterxml.jackson.core.type.TypeReference<List<Map<String, Object>>>() {});
             for (Map<String, Object> branch : branches) {
                 Object latObj = branch.get("lat");
@@ -281,14 +284,12 @@ public class ShopController {
                 if (latObj instanceof Number && lngObj instanceof Number) {
                     double lat = ((Number) latObj).doubleValue();
                     double lng = ((Number) lngObj).doubleValue();
-                    // Basic sanity check: lat in [-90,90], lng in [-180,180]
                     if (lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
                         return true;
                     }
                 }
             }
         } catch (Exception e) {
-            // Parsing failed – treat as invalid
             return false;
         }
         return false;
