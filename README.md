@@ -1,5 +1,24 @@
 # Sahay: Smart Roadside Assistance
 
+## Screenshots
+
+### Login Page
+![Login](src/main/resources/static/assets/screenshots/login.png)
+
+### Customer Dashboard
+![Customer Dashboard](src/main/resources/static/assets/screenshots/customer.png)
+
+### Sevak: Offline Chatbot
+![Sevak](src/main/resources/static/assets/screenshots/sevak.png)
+
+### Shop Dashboard
+![Shop Dashboard](src/main/resources/static/assets/screenshots/shop.png)
+
+### Admin: Analytics Dashboard
+![Admin Analytics](src/main/resources/static/assets/screenshots/admin.png)
+
+---
+
 ## What it does
 - Connects stranded drivers with nearby mechanic shops
 - Customers raise breakdown requests with live location and track status in real time
@@ -19,3 +38,14 @@
 https://sahay-9cw5.onrender.com/
 
 > Free tier: the first load may take around 50 seconds.
+
+---
+
+## Demo Credentials
+
+| Role | Username | Password |
+|---|---|---|
+| Customer | Ritesh Purohit | Ritesh@1234 |
+| Admin | Admin | admin123 |
+| Shop Owner 1 | Abhishek Sharma | Abhishek@1234 |
+| Shop Owner 2 | Pratik Sharma | Shop@123 |
