@@ -26,6 +26,7 @@ public class SecurityConfig {
             // All API endpoints used by frontend
             .requestMatchers("/api/requests/**").permitAll()
             .requestMatchers("/api/shop/**").permitAll()
+            .requestMatchers("/api/track/**").permitAll()
             .anyRequest().authenticated()
             .and()
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

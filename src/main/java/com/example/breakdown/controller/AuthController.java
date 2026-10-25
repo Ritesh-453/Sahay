@@ -28,30 +28,36 @@ public class AuthController {
         this.jwtUtil = jwtUtil;
     }
 
-@PostMapping("/login")
-public ResponseEntity<?> login(@RequestBody Map<String, String> data) {
-    String username = data.get("username");
-    String password = data.get("password");
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@RequestBody Map<String, String> data) {
+        String username = data.get("username");
+        String password = data.get("password");
 
-    System.out.println("Username: " + username);
-    System.out.println("User found: " + userRepository.findByUsername(username).isPresent());
+        if (username == null || password == null || username.isBlank() || password.isBlank())
+            return ResponseEntity.badRequest().body("Username and password are required.");
 
-    userRepository.findByUsername(username).ifPresent(user -> {
-        System.out.println("Stored hash: " + user.getPassword());
-        System.out.println("Password matches: " +
-                passwordEncoder.matches(password, user.getPassword()));
-    });
+        if (userRepository.findByUsername(username).isPresent())
+            return ResponseEntity.badRequest().body("Username already exists!");
 
-    return userRepository.findByUsername(username)
-            .filter(user -> passwordEncoder.matches(password, user.getPassword()))
-            .map(user -> {
-                String token = jwtUtil.generateToken(user.getUsername(), user.getRole());
-                return ResponseEntity.ok(Map.of(
-                    "token", token,
-                    "username", user.getUsername(),
-                    "role", user.getRole()
-                ));
-            })
-            .orElse(ResponseEntity.status(401).build());
-}
+        userRepository.save(new User(null, username, passwordEncoder.encode(password), "CUSTOMER"));
+        return ResponseEntity.ok("Registered successfully!");
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody Map<String, String> data) {
+        String username = data.get("username");
+        String password = data.get("password");
+
+        return userRepository.findByUsername(username)
+                .filter(user -> passwordEncoder.matches(password, user.getPassword()))
+                .map(user -> {
+                    String token = jwtUtil.generateToken(user.getUsername(), user.getRole());
+                    return ResponseEntity.ok(Map.of(
+                        "token", token,
+                        "username", user.getUsername(),
+                        "role", user.getRole()
+                    ));
+                })
+                .orElse(ResponseEntity.status(401).build());
+    }
 }
